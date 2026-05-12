@@ -1,0 +1,61 @@
+{
+    "directory": "title",
+    "logo": {
+        "type": "sheet",
+        "images": [
+            "logo"
+        ],
+        "properties": {
+            "x": -130,
+            "y": -100
+        },
+        "animations": [
+            {
+                "name": "idle"
+            }
+        ],
+        "bopAnimations": [
+            "idle"
+        ]
+    },
+    "gf": {
+        "type": "sheet",
+        "images": [
+            "gf"
+        ],
+        "properties": {
+            "x": 550,
+            "y": 50
+        },
+        "animations": [
+            {
+                "name": "left"
+            },
+            {
+                "name": "right"
+            }
+        ],
+        "bopAnimations": [
+            "left",
+            "right"
+        ],
+        "initialAnimation": "left"
+    },
+    "enter": {
+        "type": "sheet",
+        "images": [
+            "enter"
+        ],
+        "properties": {
+            "x": 140,
+            "y": 600
+        },
+        "animations": [
+            {
+                "name": "idle"
+            }
+        ],
+        "color": "0xFF00FFFF",
+        "initialAnimation": "idle"
+    }
+}
