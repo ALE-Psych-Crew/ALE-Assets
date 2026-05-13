@@ -85,7 +85,7 @@ function onCreate()
     text.alignment = 'centered';
     add(text);
 
-    if (true || Conductor.music == null)
+    if (Conductor.music == null)
     {
         Conductor.play(Paths.music('freakyMenu'), CoolVars.meta.bpm);
 
