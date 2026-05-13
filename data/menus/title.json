@@ -65,18 +65,49 @@
     },
     "enterPressAnimation": "press",
     "texts": {
-        "0": "Ninjamuffin\nPhantomArcade\nKawaiiSprite\nEvilsk",
-        "2": "Present",
-        "3": "",
-        "4": "Not Associated With",
-        "6": "Newgrounds",
-        "7": "",
-        "11": "",
-        "12": "Friday",
-        "13": "Night",
-        "14": "Funkin'",
-        "15": "ALE Psych"
+        "0": {
+            "text": "Ninjamuffin\nPhantomArcade\nKawaiiSprite\nEvilsk",
+            "offset": 150
+        },
+        "2": {
+            "text": "Present",
+            "offset": 150
+        },
+        "3": {
+            "text": ""
+        },
+        "4": {
+            "text": "Not Associated With"
+        },
+        "6": {
+            "text": "Newgrounds"
+        },
+        "7": {
+            "text": ""
+        },
+        "8": {},
+        "10": {},
+        "11": {
+            "text": ""
+        },
+        "12": {
+            "text": "Friday",
+            "offset": 170
+        },
+        "13": {
+            "text": "Night",
+            "offset": 170
+        },
+        "14": {
+            "text": "Funkin'",
+            "offset": 170
+        },
+        "15": {
+            "text": "ALE Psych",
+            "offset": 170
+        }
     },
+    "textsOffset": 250,
     "randomTexts": [
         "ALE Psych::Supremacy",
         "Oso::Donde que Tu Ta Oso",
@@ -99,10 +130,6 @@
         "Idiot =::Jazzy",
         "AJ::Chambea en calvin",
         "Amo las furras::Hagan furras tetonas"
-    ],
-    "randomTextsBeats": [
-        8,
-        10
     ],
     "introDuration": 16
 }
