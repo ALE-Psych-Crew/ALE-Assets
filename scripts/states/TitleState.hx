@@ -59,10 +59,9 @@ function onCreate()
         add(spr);
     }
 
-    text = new Alphabet(FlxG.width / 2, 125);
+    text = new Alphabet(FlxG.width / 2, FlxG.height * 0.2);
     text.alignment = 'centered';
     add(text);
-
 
     if (Conductor.music == null)
     {
