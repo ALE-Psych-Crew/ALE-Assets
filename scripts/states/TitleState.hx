@@ -3,8 +3,6 @@ import funkin.visuals.objects.Bopper;
 
 using StringTools;
 
-HotReloading.add('data/menus/title.json');
-
 @:typedef JsonTitle = {
     var directory:String;
     
@@ -148,7 +146,7 @@ function onUpdate(elapsed:Float)
 
             camGame.flash(FlxColor.WHITE, 1, null, true);
 
-            FlxG.sound.play(Paths.sound('confirmMenu'));
+            CoolUtil.playSound('confirm');
 
             FlxTimer.wait(1, () -> CoolUtil.switchState(new CustomState(CoolVars.data.mainMenuState)));
         } else {
