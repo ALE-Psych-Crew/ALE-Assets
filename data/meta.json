@@ -1,4 +1,5 @@
 {
     "bpm": 102,
-    "developerMode": true
+    "developerMode": true,
+    "verbose": false
 }
