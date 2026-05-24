@@ -16,22 +16,17 @@
 			"color": "#9271FD"
 		}
 	],
+	"background": "stage",
 	"image": "week1",
-	"hideFreeplay": false,
 	"phrase": "Daddy Dearest",
+	"locked": false,
+	"hideFreeplay": false,
+	"hideStoryMode": false,
+	"previousWeek": "tutorial",
 	"difficulties": [
 		"Easy",
 		"Normal",
 		"Hard"
 	],
-	"background": "stage",
-	"hideStoryMode": false,
-	"characters": [
-		"dad",
-		"bf",
-		"gf"
-	],
-	"locked": false,
-	"weekBefore": "tutorial",
 	"format": "ale-week-v0.1"
 }
