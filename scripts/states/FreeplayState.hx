@@ -31,6 +31,9 @@ var infoBG:FlxSprite;
 var scoreText:FlxText;
 var difficultyText:FlxText;
 
+function checkLocked(week:JsonWeek)
+    return week.locked;
+
 function onCreate()
 {
     bg = CoolUtil.spriteFromJson(null, config.bg, 'menus/' + config.directory + '/');
@@ -62,7 +65,7 @@ function onCreate()
 
     for (week in weeks)
     {
-        if (week.hideFreeplay)
+        if (week.hideFreeplay || checkLocked(week))
             continue;
 
         for (song in week.songs)

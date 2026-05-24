@@ -29,7 +29,7 @@ final config:JsonTitle = Paths.json('data/menus/title');
 
 var currentTextData(get, never):Null<TextData>;
 function get_currentTextData():Null<TextData>
-    return Reflect.field(config.texts, '' + Conductor.curBeat);
+    return Reflect.field(config.texts, Std.string(Conductor.safeBeat));
 
 function getRandomText():String
     return config.randomTexts[FlxG.random.int(0, config.randomTexts.length - 1)].split('::');
