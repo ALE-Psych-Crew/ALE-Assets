@@ -1,5 +1,7 @@
 import funkin.visuals.objects.Alphabet;
 
+import utils.Formatter;
+
 using StringTools;
 
 @:typedef JsonFreeplay = {
@@ -53,9 +55,7 @@ function onCreate()
         if (weekNames.contains(name))
             continue;
 
-        // weeks.push(Formatter.getWeek(name));
-
-        weeks.push(Paths.json('data/weeks/' + name));
+        weeks.push(Formatter.getWeek(name));
 
         weekNames.push(name);
     }
