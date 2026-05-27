@@ -96,7 +96,7 @@ var characters:FlxTypedGroup<Character>;
 
 var playerCharacters:FlxTypedGroup<Character>;
 var opponentCharacters:FlxTypedGroup<Character>;
-var extraCharacter:FlxTypedGroup<Character>;
+var extraCharacters:FlxTypedGroup<Character>;
 
 var bf(get, never):Character;
 function get_bf():Character
@@ -108,7 +108,7 @@ function get_dad():Character
 
 var gf(get, never):Character;
 function get_gf():Character
-    return extraCharacter.members[0];
+    return extraCharacters.members[0];
 
 var charactersArray:Array<Array<Character>> = [];
 
@@ -127,7 +127,7 @@ function initStrumLines()
 
     playerCharacters = new FlxTypedGroup<Character>();
     opponentCharacters = new FlxTypedGroup<Character>();
-    extraCharacter = new FlxTypedGroup<Character>();
+    extraCharacters = new FlxTypedGroup<Character>();
 
     final notes:Array<Array<Array<Dynamic>>> = [];
     
@@ -199,6 +199,18 @@ function initStrumLines()
 function addStrumLine(strl:StrumLine)
 {
     strumLines.add(strl);
+
+    switch (strl.type)
+    {
+        case 'opponent':
+            opponentStrumLines.add(strl);
+
+        case 'player':
+            playerStrumLines.add(strl);
+
+        case 'extra':
+            extraStrumLines.add(strl);
+    }
 }
 
 function addCharacter(char:Character)
@@ -214,7 +226,7 @@ function addCharacter(char:Character)
             playerCharacters.add(char);
 
         case 'extra':
-            extraCharacter.add(char);
+            extraCharacters.add(char);
     }
 
     add(char);
@@ -428,8 +440,8 @@ function onDestroy()
     playerCharacters = null;
     opponentCharacters.destroy();
     opponentCharacters = null;
-    extraCharacter.destroy();
-    extraCharacter = null;
+    extraCharacters.destroy();
+    extraCharacters = null;
 
 
     icons.destroy();
