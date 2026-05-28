@@ -12,15 +12,17 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
     public final strumLineIndex:Int;
 
+    var inputMap:Map<Int, Array<Int>>;
+
     public var strums:FlxTypedSpriteGroup<Strum>;
-    var notes:FlxTypedSpriteGroup<Note>;
-    var splash:FlxTypedSpriteGroup<Splash>;
+    public var notes:FlxTypedSpriteGroup<Note>;
+    public var splashes:FlxTypedSpriteGroup<Splash>;
 
     public var downScroll:Bool = ClientPrefs.data.downScroll;
 
     var noteStack:GenericStack<Note>;
 
-    public function new(id:String, type:CharacterType, strumLineIndex:Int, chartSections:Array<Array<Dynamic>>, ogBPM:Float)
+    public function new(id:String, type:CharacterType, strumLineIndex:Int, chartSections:Array<Array<Dynamic>>, ogBPM:Float, ?noteStackCallback:Note -> Bool)
     {
         super();
 
@@ -28,15 +30,34 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
         this.type = type;
 
+        botplay = type == 'opponent';
+
         config = Formatter.getStrumLine(id);
+
+        inputMap = new Map<Int, Array<Int>>();
 
         add(strums = new FlxTypedSpriteGroup<Strum>());
         add(notes = new FlxTypedSpriteGroup<Note>());
-        add(splash = new FlxTypedSpriteGroup<Splash>());
+        add(splashes = new FlxTypedSpriteGroup<Splash>());
 
         for (index => data in config.config)
         {
+            for (key in Controls.getKeybind(data.keyBind.group, data.keyBind.id))
+            {
+                final list = inputMap.get(key);
+
+                if (list == null)
+                {
+                    list = [];
+
+                    inputMap.set(key, list);
+                }
+
+                list.push(index);
+            }
+
             final strum:Strum = new Strum(config.strums, data);
+            strum.strumLine = super;
             strum.x = index * config.spacing;
 
             strums.add(strum);
@@ -58,7 +79,7 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
                 final time:Float = chartNote[0];
 
-                if (time > Conductor.sectionCrochet * 2)
+                if (time > Conductor.sectionCrochet * 4)
                     continue;
 
                 final data:Int = chartNote[1];
@@ -68,7 +89,7 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
                 final strumLineConfig:JsonStrumLineConfig = config.config[data];
 
-                final crochet:Float = Conductor.crochet;
+                final crochet:Float = Conductor.stepCrochet;
 
                 final strum:Strum = strums.members[data];
                 
@@ -125,8 +146,11 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
         noteStack = new GenericStack<Note>();
 
+        noteStackCallback ??= _ -> true;
+
         for (note in tempNotes)
-            noteStack.add(note);
+            if (noteStackCallback(note))
+                noteStack.add(note);
 
         tempNotes = null;
 
@@ -134,7 +158,8 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
     }
 
     public var spawnWindow:Float = 2000;
-    public var despawnWindow:Float = 650;
+    public var despawnWindow:Float = 1000;
+    public var missWindow:Int = 180;
 
     public var speed:Float = 1;
 
@@ -168,9 +193,17 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
             if (botplay)
             {
+                if (note.botplayMiss && note.timeDistance < -missWindow && !note.miss && !note.hit && note.ignore)
+                    missNote(note);
+
+                if (note.timeDistance <= 0 && !note.hit && !note.ignore)
+                    hitNote(note, note.type == 'arrow');
             } else {
-                if (note.type != 'arrow' && !note.miss && !note.hit && note.timeDistance <= 0 && note.parent.hit)
+                if (note.type != 'arrow' && !note.miss && !note.hit && note.timeDistance <= 0 && keyPressed[note.data] && note.parent.hit)
                     hitNote(note, false);
+
+                if (note.timeDistance < -missWindow && !note.miss && !note.hit && !note.ignore)
+                    missNote(note);
             }
 
             if (note.exists)
@@ -188,22 +221,96 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
         }
     }
 
+    var keyPressed:Array<Bool> = [];
+
+    public function justPressedKey(key:Int)
+    {
+        if (botplay)
+            return;
+
+        final strumIndices:Null<Array<Null<Int>>> = inputMap.get(key);
+
+        if (strumIndices != null)
+        {
+            for (strumIndex in strumIndices)
+            {
+                keyPressed[strumIndex] = true;
+
+                var noteToHit:Null<Note> = null;
+
+                for (note in notes)
+                {
+                    if (note == null || note.type != 'arrow' || note.data != strumIndex || note.timeDistance < -missWindow)
+                        continue;
+
+                    if (note.timeDistance > missWindow)
+                        break;
+
+                    if (noteToHit == null || noteToHit.timeDistance > note.timeDistance)
+                        noteToHit = note;
+                }
+
+                if (noteToHit != null)
+                    hitNote(noteToHit);
+                else
+                    strums.members[strumIndex].playAnim(config.config[strumIndex].press);
+            }
+        }
+    }
+
+    public function justReleasedKey(key:Int)
+    {
+        if (botplay)
+            return;
+
+        var strumIndices:Null<Array<Null<Int>>> = inputMap.get(key);
+
+        if (strumIndices != null)
+        {
+            for (strumIndex in strumIndices)
+            {
+                keyPressed[strumIndex] = false;
+
+                strums.members[strumIndex]?.playAnim(config.config[strumIndex].idle);
+            }
+        }
+    }
+
     function addNote(note:Note)
     {
         notes.add(note);
+
+        note.strum.children.push(note);
     }
+
+    public var noteHitCallback:Note -> Float -> Bool -> Bool = (_, __, ___) -> true;
 
     function hitNote(note:Note, ?remove:Bool = true)
     {
-        if (remove)
-            removeNote(note);
+        if (noteHitCallback(note, note.timeDistance, remove))
+        {
+            note.hit = true;
+
+            note.strum.playAnim(note.strum.strumLineConfig.hit);
+            
+            if (remove)
+                removeNote(note);
+        }
+    }
+
+    public var noteMissCallback:Note -> Bool = _ -> true;
+
+    function missNote(note:Note)
+    {
+        if (noteMissCallback(note))
+            note.miss = true;
     }
 
     function removeNote(note:Note)
     {
         note.kill();
 
-        note?.strum?.children.remove(note);
+        note.strum.children.remove(note);
 
         notes.remove(note, true);
 

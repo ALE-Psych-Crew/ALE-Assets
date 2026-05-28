@@ -95,7 +95,7 @@ class Note extends StrumLineObject
                 x = strum.x + distance * FlxMath.fastCos(rawDirection) + xOffset;
 
             if (copyY)
-                y = strum.y + (distance + yOffset) * FlxMath.fastSin(rawDirection);
+                y = strum.y + distance * FlxMath.fastSin(rawDirection) + yOffset;
         }
 
         if (sustainClipping && type != 'arrow')

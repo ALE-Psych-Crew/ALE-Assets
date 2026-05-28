@@ -3,7 +3,7 @@ package;
 class StrumLineObject extends scripting.haxe.ScriptedFunkinSprite
 {
     public var strumLine:StrumLine;
-    var strumLineConfig:JsonStrumLineConfig;
+    public var strumLineConfig:JsonStrumLineConfig;
 
     public var data:Int = 0;
 
