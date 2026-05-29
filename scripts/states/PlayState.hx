@@ -27,6 +27,8 @@ final difficulty:String;
 final chart:JsonChart;
 final songRoute:String;
 
+var startTime:Float = Conductor.music == null ? 0 : Conductor.music.length * 0.99;
+
 public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
 {
     // SUPER CALL
@@ -72,6 +74,8 @@ var charactersArray:Array<Array<Character>> = [];
 
 var strums:FlxTypedGroup<Strum>;
 
+var characterFactory:String -> CharacterType -> StrumLine = (id, type) -> new Character(id, type);
+
 function initStrumLines()
 {
     if (scriptCallbackCall(ON, 'StrumLinesInit'))
@@ -94,6 +98,9 @@ function initStrumLines()
 
             for (note in section.notes)
             {
+                if (note[0] <= startTime)
+                    continue;
+
                 notesArray[note[4]] ??= [];
 
                 notesArray[note[4]].push([
@@ -113,7 +120,7 @@ function initStrumLines()
         {
             for (charIndex => char in strl.characters)
             {
-                final character:Character = new Character(char, strl.type);
+                final character:Character = characterFactory(char, strl.type);
                 characters.add(character);
                 add(character);
 
@@ -299,6 +306,8 @@ function initSong()
     {
         Conductor.play(soundsMap.get('::MUSIC'), chart.bpm, chart.stepsPerBeat, chart.beatsPerSection, false, 0.85);
 
+        Conductor.music.time = startTime;
+
         var voices:Null<Sound> = null;
 
         if (soundsMap.exists('::VOICES'))
@@ -363,7 +372,11 @@ function initSong()
         }
 
         for (voice in vocals)
+        {
             voice.play();
+
+            voice.time = startTime;
+        }
     }
 
     scriptCallbackCall(POST, 'SongInit');
@@ -386,7 +399,23 @@ function addVocal(sound:Sound)
     scriptCallbackCall(POST, 'VocalAdd', null, [sound], []);
 }
 
+// Story
+
+function exit()
+{
+    if (scriptCallbackCall(ON, 'Exit'))
+    {
+    }
+
+    scriptCallbackCall(POST, 'Exit');
+}
+
 // ScriptedState Callbacks
+
+function onMusicComplete()
+{
+    exit();
+}
 
 function onDestroy()
 {
