@@ -8,13 +8,13 @@ class Strum extends StrumLineObject
 
     public var direction:Float = 0;
 
-    public function new(id:String, strlData:JsonStrumLineConfig)
+    public function new(id:String, strlData:JsonStrumLineConfig, data:Int)
     {
         allowOffset = false;
 
         pathPrefix = 'notes/';
 
-        super(id, strlData);
+        super(id, strlData, data);
 
         playAnim(strumLineConfig.idle);
     }
@@ -34,9 +34,14 @@ class Strum extends StrumLineObject
         }
     }
 
+    public var allowShaderDuringIdle:Bool = false;
+
     override function playAnim(name:String, ?force:Bool = true)
     {
         super.playAnim(name, force);
+
+        if (shader != null)
+            shader.multiplier = animation.name != strumLineConfig.idle || allowShaderDuringIdle ? 1 : 0;
 
         idleTimer = animation.name == strumLineConfig.idle ? -1 : idleTime;
         

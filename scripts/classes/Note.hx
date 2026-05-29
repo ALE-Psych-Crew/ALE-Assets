@@ -1,5 +1,7 @@
 package;
 
+import funkin.visuals.shaders.RGBShader;
+
 import flixel.math.FlxAngle;
 import flixel.math.FlxRect;
 
@@ -36,13 +38,13 @@ class Note extends StrumLineObject
         return speed;
     }
 
-    public function new(id:String, strlData:JsonStrumLineConfig, type:NoteType)
+    public function new(id:String, strlData:JsonStrumLineConfig, type:NoteType, data:Int, rgb:RGBShader)
     {
         allowOffset = false;
 
         pathPrefix = 'notes/';
 
-        super(id, strlData);
+        super(id, strlData, data, rgb);
 
         this.type = type;
 

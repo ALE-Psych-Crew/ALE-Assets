@@ -4,11 +4,11 @@ class Splash extends StrumLineObject
 {
     public var strum:Strum;
 
-    public function new(id:String, strlData:JsonStrumLineConfig)
+    public function new(id:String, strlData:JsonStrumLineConfig, data:Int)
     {
         pathPrefix = 'splashes/';
 
-        super(id, strlData);
+        super(id, strlData, data);
 
         exists = false;
 
