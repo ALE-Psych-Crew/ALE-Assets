@@ -24,15 +24,19 @@ function scriptCallbackCall(type:String, name:String, ?globalArgs:Array<Dynamic>
 
 final song:String;
 final difficulty:String;
-
 final chart:JsonChart;
+final songRoute:String;
 
 public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
 {
     // SUPER CALL
 
+    Conductor.stop();
+
     song = newSong;
     difficulty = newDifficulty;
+
+    songRoute = CoolUtil.searchComplexFile('songs/' + song);
 
     chart = Formatter.getChart(song, difficulty);
 }
@@ -50,6 +54,8 @@ function onCreate()
         initStrumLines();
 
         initControls();
+
+        initSounds();
 
         initSong();
     }
@@ -257,9 +263,127 @@ function justReleasedKey(event:KeyboardEvent)
 
 // Audios
 
+final soundsMap:Map<String, Sound> = new Map<String, Sound>();
+
+function initSounds()
+{
+    if (scriptCallbackCall(ON, 'SoundsInit'))
+    {
+        soundsMap.set('::MUSIC', Paths.inst(songRoute));
+
+        for (postfix in [null, 'Player', 'Opponent', 'Extra'])
+        {
+            final audio:Sound = Paths.voices(songRoute, postfix, false, false);
+
+            if (audio != null)
+                soundsMap.set('::' + (postfix == null ? 'VOICES' : postfix.toUpperCase()), audio);
+        }
+
+        for (char in characters)
+        {
+            final audio:Sound = Paths.voices(songRoute, char.id, false, false);
+
+            if (audio != null)
+                soundsMap.set(char.id, audio);
+        }
+    }
+
+    scriptCallbackCall(POST, 'SoundsInit');
+}
+
+var vocals:Array<Sound> = [];
+
 function initSong()
 {
-    Conductor.play(Paths.inst('songs/' + song));
+    if (scriptCallbackCall(ON, 'SongInit'))
+    {
+        Conductor.play(soundsMap.get('::MUSIC'), chart.bpm, chart.stepsPerBeat, chart.beatsPerSection, false, 0.85);
+
+        var voices:Null<Sound> = null;
+
+        if (soundsMap.exists('::VOICES'))
+            voices = new Sound().loadEmbedded(soundsMap.get('::VOICES'));
+
+        var playersVoices:Null<Sound> = null;
+
+        if (soundsMap.exists('::PLAYER'))
+            playersVoices = new Sound().loadEmbedded(soundsMap.get('::PLAYER'));
+
+        var opponentsVoices:Null<Sound> = null;
+
+        if (soundsMap.exists('::OPPONENT'))
+            opponentsVoices = new Sound().loadEmbedded(soundsMap.get('::OPPONENT'));
+
+        var extrasVoices:Null<Sound> = null;
+
+        if (soundsMap.exists('::EXTRA'))
+            extrasVoices = new Sound().loadEmbedded(soundsMap.get('::EXTRA'));
+
+        for (sound in [voices, playersVoices, opponentsVoices, extrasVoices])
+            if (sound != null)
+                addVocal(sound);
+
+        final charVocals = new Map<String, Sound>();
+
+        for (char in characters)
+        {
+            if (voices != null)
+                char.vocals.push(voices);
+
+            final defaultVoice:Null<Sound> = switch (cast char.type)
+            {
+                case 'player':
+                    playersVoices;
+
+                case 'opponent':
+                    opponentsVoices;
+
+                case 'extra':
+                    extrasVoices;
+            }
+
+            if (defaultVoice != null)
+                char.vocals.push(defaultVoice);
+
+            final voice:Null<Sound> = null;
+
+            if (charVocals.exists(char.id))
+            {
+                voice = charVocals.get(char.id);
+            } else if (soundsMap.exists(char.id)) {
+                voice = new Sound().loadEmbedded(soundsMap.get(char.id));
+
+                addVocal(voice);
+
+                charVocals.set(char.id, voice);
+            }
+
+            if (voice != null)
+                char.vocals.push(voice);
+        }
+
+        for (voice in vocals)
+            voice.play();
+    }
+
+    scriptCallbackCall(POST, 'SongInit');
+}
+
+function addVocal(sound:Sound)
+{
+    if (scriptCallbackCall(ON, 'VocalAdd', null, [sound], []))
+    {
+        if (sound != null)
+        {
+            vocals.push(sound);
+
+            Conductor.synchronizedSounds.push(sound);
+
+            FlxG.sound.list.add(sound);
+        }
+    }
+
+    scriptCallbackCall(POST, 'VocalAdd', null, [sound], []);
 }
 
 // ScriptedState Callbacks
@@ -270,6 +394,9 @@ function onDestroy()
 
     FlxG.stage.removeEventListener('keyDown', justPressedKey);
     FlxG.stage.removeEventListener('keyUp', justReleasedKey);
+
+    for (vocal in vocals.copy())
+        Conductor.synchronizedSounds.remove(vocal);
 
     characters?.destroy();
 
