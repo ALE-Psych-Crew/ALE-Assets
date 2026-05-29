@@ -22,7 +22,7 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
     var noteStack:GenericStack<Note>;
 
-    public function new(id:String, type:CharacterType, strumLineIndex:Int, chartSections:Array<Array<Dynamic>>, ogBPM:Float, ?noteStackCallback:Note -> Bool)
+    public function new(id:String, type:CharacterType, strumLineIndex:Int, chartNotes:Array<Array<Dynamic>>, ?noteStackCallback:Note -> Bool)
     {
         super();
 
@@ -61,81 +61,79 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
             strum.x = index * config.spacing;
 
             strums.add(strum);
-        }
 
-        Conductor.bpm = ogBPM;
+            final splash:Splash = new Splash(config.splashes, data);
+            splash.strumLine = super;
+            splash.strum = strum;
+            splash.data = index;
+
+            splashes.add(splash);
+        }
 
         var tempNotes:Array<Note> = [];
 
-        for (section in chartSections)
+        for (chartNote in chartNotes ?? [])
         {
-            if (section.changeBPM)
-                Conductor.bpm = section.bpm;
+            final time:Float = chartNote[0];
 
-            for (chartNote in section.notes)
+            if (time > Conductor.sectionCrochet * 2)
+                continue;
+
+            final data:Int = chartNote[1];
+            final length:Float = chartNote[2];
+            final type:String = chartNote[3];
+            final character:Int = chartNote[4];
+            final crochet:Float = chartNote[5];
+
+            final strumLineConfig:JsonStrumLineConfig = config.config[data];
+
+            final strum:Strum = strums.members[data];
+            final splash:Splash = splashes.members[data];
+            
+            final note:Note = new Note(config.notes, strumLineConfig, 'arrow');
+            note.strumLine = super;
+            note.crochet = crochet;
+            note.strum = strum;
+            note.splash = splash;
+            note.time = time;
+            note.xOffset = strum.width / 2 - note.width / 2;
+            note.yOffset = strum.height / 2 - note.height / 2;
+            note.data = data;
+            note.length = length;
+            note.noteType = type;
+            note.character = [strumLineIndex, character];
+            
+            tempNotes.push(note);
+
+            if (length > 0)
             {
-                if (chartNote[4] != strumLineIndex)
-                    continue;
+                final floorLength:Int = Math.floor(length / crochet) + 1;
 
-                final time:Float = chartNote[0];
+                var parent:Note = note;
 
-                if (time > Conductor.sectionCrochet * 4)
-                    continue;
-
-                final data:Int = chartNote[1];
-                final length:Float = chartNote[2];
-                final type:String = chartNote[3];
-                final character:Int = chartNote[5];
-
-                final strumLineConfig:JsonStrumLineConfig = config.config[data];
-
-                final crochet:Float = Conductor.stepCrochet;
-
-                final strum:Strum = strums.members[data];
-                
-                final note:Note = new Note(config.notes, strumLineConfig, 'arrow');
-                note.strumLine = super;
-                note.crochet = crochet;
-                note.strum = strum;
-                note.time = time;
-                note.data = data;
-                note.length = length;
-                note.noteType = type;
-                note.character = [strumLineIndex, character];
-                
-                tempNotes.push(note);
-
-                if (length > 0)
+                for (i in 0...floorLength)
                 {
-                    final floorLength:Int = Math.floor(length / crochet) + 1;
+                    final sustain:Note = new Note(config.notes, strumLineConfig, i == floorLength - 1 ? 'end' : 'sustain');
+                    sustain.strumLine = super;
+                    sustain.crochet = crochet;
+                    sustain.strum = strum;
+                    sustain.splash = splash;
+                    sustain.time = time + i * crochet;
+                    sustain.data = data;
+                    sustain.noteType = type;
+                    sustain.xOffset = strum.width / 2 - sustain.width / 2;
+                    sustain.yOffset = strum.height / 2;
+                    sustain.parent = parent;
+                    sustain.alphaMultiplier = 0.5;
+                    sustain.character = [strumLineIndex, character];
+                    sustain.flipY = downScroll;
 
-                    var parent:Note = note;
+                    tempNotes.push(sustain);
 
-                    for (i in 0...floorLength)
-                    {
-                        final sustain:Note = new Note(config.notes, strumLineConfig, i == floorLength - 1 ? 'end' : 'sustain');
-                        sustain.strumLine = super;
-                        sustain.crochet = crochet;
-                        sustain.strum = strum;
-                        sustain.time = time + i * crochet;
-                        sustain.data = data;
-                        sustain.noteType = type;
-                        sustain.xOffset = strum.width / 2 - sustain.width / 2;
-                        sustain.yOffset = strum.height / 2;
-                        sustain.parent = parent;
-                        sustain.alphaMultiplier = 0.5;
-                        sustain.character = [strumLineIndex, character];
-                        sustain.flipY = downScroll;
-
-                        tempNotes.push(sustain);
-
-                        parent = sustain;
-                    }
+                    parent = sustain;
                 }
             }
         }
-
-        Conductor.bpm = ogBPM;
 
         tempNotes.sort((a, b) -> {
             if (a.time == b.time)
@@ -153,8 +151,6 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
                 noteStack.add(note);
 
         tempNotes = null;
-
-        Conductor.bpm = ogBPM;
     }
 
     public var spawnWindow:Float = 2000;
@@ -165,6 +161,8 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
     public var botplay:Bool = false;
 
+    public var noteSpawnCallback:Note -> Bool = _ -> true;
+
     override function update(elapsed:Float)
     {
         super.update(elapsed);
@@ -173,7 +171,8 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
         {
             final note:Note = noteStack.pop();
 
-            addNote(note);
+            if (noteSpawnCallback(note))
+                addNote(note);
         }
 
         var noteIndex:Int = 0;

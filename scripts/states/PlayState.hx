@@ -12,18 +12,20 @@ ClientPrefs.data.botplay = false;
 for (file in Paths.readDirectory('scripts/classes'))
     HotReloading.add('scripts/classes/' + file);
 
+// enum ahh shit
+
+final ON:String = 'on';
+final POST:String = 'post';
+
+function scriptCallbackCall(type:String, name:String, ?globalArgs:Array<Dynamic>, ?hxArgs:Array<Dynamic>, ?luaArgs:Array<Dynamic>):Bool
+    return true;
+
+// ñam
+
 final song:String;
 final difficulty:String;
 
 final chart:JsonChart;
-
-// enum ahh shit
-
-final ON:String = 'on';
-final POST:String = 'on';
-
-function scriptCallbackCall(type:String, name:String, ?globalArgs:Array<Dynamic>, ?hxArgs:Array<Dynamic>, ?luaArgs:Array<Dynamic>):Bool
-    return true;
 
 public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
 {
@@ -34,6 +36,10 @@ public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
 
     chart = Formatter.getChart(song, difficulty);
 }
+
+var totalNoteTypes:Array<String> = [];
+
+var allowNotesSpawning:Bool = true;
 
 function onCreate()
 {
@@ -55,6 +61,9 @@ function onCreate()
 
 var strumLines:FlxTypedGroup<StrumLine>;
 
+var characters:FlxTypedGroup<Character>;
+var charactersArray:Array<Array<Character>> = [];
+
 var strums:FlxTypedGroup<Strum>;
 
 function initStrumLines()
@@ -64,11 +73,53 @@ function initStrumLines()
         add(strumLines = new FlxTypedGroup<StrumLine>());
         strumLines.camera = camHUD;
 
+        characters = new FlxTypedGroup<Character>();
+
         strums = new FlxTypedGroup<Strum>();
+
+        final notesArray:Array<Array<Note>> = [];
+
+        Conductor.bpm = chart.bpm;
+
+        for (section in chart.sections)
+        {
+            if (section.changeBPM)
+                Conductor.bpm = section.bpm;
+
+            for (note in section.notes)
+            {
+                notesArray[note[4]] ??= [];
+
+                notesArray[note[4]].push([
+                    note[0],
+                    note[1],
+                    note[2],
+                    note[3],
+                    note[5],
+                    Conductor.stepCrochet
+                ]);
+            }
+        }
+
+        Conductor.bpm = chart.bpm;
 
         for (index => strl in chart.strumLines)
         {
-            final strumLine:StrumLine = new StrumLine(strl.file, strl.type, index, chart.sections, chart.bpm);
+            for (charIndex => char in strl.characters)
+            {
+                final character:Character = new Character(char, strl.type);
+                characters.add(character);
+                add(character);
+
+                charactersArray[index] ??= [];
+
+                charactersArray[index][charIndex] = character;
+            }
+
+            final strumLine:StrumLine = new StrumLine(strl.file, strl.type, index, allowNotesSpawning ? notesArray[index] : [], stackNote);
+            strumLine.noteSpawnCallback = spawnNote;
+            strumLine.noteHitCallback = hitNote;
+            strumLine.noteMissCallback = missNote;
 
             var strumHeight:Float = 0;
 
@@ -88,6 +139,86 @@ function initStrumLines()
 
     scriptCallbackCall(POST, 'StrumLinesInit');
 }
+
+var lastStackedNote:Note = null;
+
+function stackNote(note:Note):Bool
+{
+    lastStackedNote = note;
+
+    final result:Bool = scriptCallbackCall(ON, 'NoteStack', null, [note], []);
+
+    if (result)
+        if (totalNoteTypes.contains(note.noteType))
+            totalNoteTypes.push(note.noteType);
+
+    scriptCallbackCall(POST, 'NoteStack', null, [note], []);
+
+    return result;
+}
+
+var lastSpawnedNote:Note = null;
+
+function spawnNote(note:Note):Bool
+{
+    lastSpawnedNote = note;
+
+    final result:Bool = scriptCallbackCall(ON, 'NoteSpawn', null, [note], []);
+
+    scriptCallbackCall(POST, 'NoteSpawn', null, [note], []);
+
+    return result;
+}
+
+var lastHitNote:Note = null;
+var lastHitNoteCharacter:Note = null;
+
+function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
+{
+    lastHitNote = note;
+    lastHitNoteCharacter = characterFromNote(note);
+
+    final rating:String = judgeNote(note.timeDistance);
+
+    final result:Bool = scriptCallbackCall(ON, 'NoteHit', null, [note, rating, lastHitNoteCharacter, removeNote], [rating, removeNote]);
+
+    if (result)
+    {
+        lastHitNoteCharacter.sing(note.type != 'arrow' && !lastHitNoteCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.sing);
+    }
+
+    scriptCallbackCall(POST, 'NoteHit', null, [note, rating, lastHitNoteCharacter, removeNote], [rating, removeNote]);
+
+    return result;
+}
+
+var lastMissNote:Note = null;
+var lastMissNoteCharacter:Note = null;
+
+function missNote(note:Note):Bool
+{
+    lastMissNote = note;
+    lastMissNoteCharacter = characterFromNote(note);
+
+    final result:Bool = scriptCallbackCall(ON, 'NoteMiss', null, [note, lastMissNoteCharacter], []);
+
+    if (result)
+    {
+        lastMissNoteCharacter.miss(note.type != 'arrow' && !lastMissNoteCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.miss);
+    }
+
+    scriptCallbackCall(POST, 'NoteMiss', null, [note, lastMissNoteCharacter], []);
+    
+    return result;
+}
+
+function judgeNote(distance:Float):String
+{
+    return 'UNKNOWN';
+}
+
+function characterFromNote(note:Note):Character
+    return charactersArray[note.character[0]][note.character[1]];
 
 function initControls()
 {
@@ -124,12 +255,14 @@ function justReleasedKey(event:KeyboardEvent)
     scriptCallbackCall(POST, 'JustReleasedKey', null, [event], [event.keyCode]);
 }
 
+// Audios
+
 function initSong()
 {
     Conductor.play(Paths.inst('songs/' + song));
 }
 
-// Flixel
+// ScriptedState Callbacks
 
 function onDestroy()
 {
@@ -138,5 +271,7 @@ function onDestroy()
     FlxG.stage.removeEventListener('keyDown', justPressedKey);
     FlxG.stage.removeEventListener('keyUp', justReleasedKey);
 
-    strums.destroy();
+    characters?.destroy();
+
+    strums?.destroy();
 }

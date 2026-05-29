@@ -8,6 +8,7 @@ class Note extends StrumLineObject
     public final type:NoteType;
 
     public var strum:Strum;
+    public var splash:Splash;
 
     public var parent:Note;
 
