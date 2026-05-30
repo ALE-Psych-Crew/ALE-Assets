@@ -1,12 +1,13 @@
 package;
 
 import flixel.text.FlxText.FlxTextBorderStyle;
+import flixel.FlxObject;
 
 import utils.Formatter;
 
 
 ClientPrefs.data.downScroll = false;
-ClientPrefs.data.botplay = false;
+ClientPrefs.data.botplay = true;
 
 
 for (file in Paths.readDirectory('scripts/classes'))
@@ -26,8 +27,11 @@ final song:String;
 final difficulty:String;
 final chart:JsonChart;
 final songRoute:String;
+final hud:JsonHud = {
+    directory: 'default',
+};
 
-var startTime:Float = Conductor.music == null ? 0 : Conductor.music.length * 0.99;
+var startTime:Float = 0;
 
 public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
 {
@@ -45,7 +49,7 @@ public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
 
 var totalNoteTypes:Array<String> = [];
 
-var allowNotesSpawning:Bool = true;
+var allowNotesSpawning:Bool = false;
 
 function onCreate()
 {
@@ -56,6 +60,8 @@ function onCreate()
         initStrumLines();
 
         initControls();
+
+        initHud();
 
         initSounds();
 
@@ -91,26 +97,29 @@ function initStrumLines()
 
         Conductor.bpm = chart.bpm;
 
-        for (section in chart.sections)
+        if (allowNotesSpawning)
         {
-            if (section.changeBPM)
-                Conductor.bpm = section.bpm;
-
-            for (note in section.notes)
+            for (section in chart.sections)
             {
-                if (note[0] <= startTime)
-                    continue;
+                if (section.changeBPM)
+                    Conductor.bpm = section.bpm;
 
-                notesArray[note[4]] ??= [];
+                for (note in section.notes)
+                {
+                    if (note[0] <= startTime)
+                        continue;
 
-                notesArray[note[4]].push([
-                    note[0],
-                    note[1],
-                    note[2],
-                    note[3],
-                    note[5],
-                    Conductor.stepCrochet
-                ]);
+                    notesArray[note[4]] ??= [];
+
+                    notesArray[note[4]].push([
+                        note[0],
+                        note[1],
+                        note[2],
+                        note[3],
+                        note[5],
+                        Conductor.stepCrochet
+                    ]);
+                }
             }
         }
 
@@ -129,7 +138,7 @@ function initStrumLines()
                 charactersArray[index][charIndex] = character;
             }
 
-            final strumLine:StrumLine = new StrumLine(strl.file, strl.type, index, allowNotesSpawning ? notesArray[index] : [], stackNote);
+            final strumLine:StrumLine = new StrumLine(strl.file, strl.type, index, notesArray[index], stackNote);
             strumLine.noteSpawnCallback = spawnNote;
             strumLine.noteHitCallback = hitNote;
             strumLine.noteMissCallback = missNote;
@@ -266,6 +275,30 @@ function justReleasedKey(event:KeyboardEvent)
             strumLines.forEachAlive(strl -> strl.justReleasedKey(event.keyCode));
 
     scriptCallbackCall(POST, 'JustReleasedKey', null, [event], [event.keyCode]);
+}
+
+// Hud
+
+var uiGroup:FlxTypedGroup<FlxObject>;
+var healthBar:Bar;
+
+camGame.bgColor = FlxColor.GRAY;
+
+function initHud()
+{
+    if (scriptCallbackCall(ON, 'HudInit'))
+    {
+        uiGroup = new FlxTypedGroup<FlxObject>();
+        uiGroup.camera = camHUD;
+        add(uiGroup);
+
+        healthBar = new Bar('hud/' + hud.directory + '/bar', 'hud/' + hud.directory + '/barFill');
+        healthBar.x = FlxG.width / 2 - healthBar.width / 2;
+        healthBar.y = FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9);
+        uiGroup.add(healthBar);
+    }
+
+    scriptCallbackCall(POST, 'HudInit');
 }
 
 // Audios
