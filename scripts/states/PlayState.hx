@@ -3,6 +3,8 @@ package;
 import flixel.text.FlxText.FlxTextBorderStyle;
 import flixel.FlxObject;
 
+import funkin.visuals.FXCamera;
+
 import utils.Formatter;
 
 
@@ -51,12 +53,14 @@ var totalNoteTypes:Array<String> = [];
 
 var allowNotesSpawning:Bool = false;
 
-function onCreate()
+function postCreate()
 {
     // SUPER CALL
     
     if (scriptCallbackCall(ON, 'Create'))
     {
+        initCharacters();
+
         initStrumLines();
 
         initControls();
@@ -71,16 +75,98 @@ function onCreate()
     scriptCallbackCall(POST, 'Create');
 }
 
-// StrumLines & Characters
+// Cameras
 
-var strumLines:FlxTypedGroup<StrumLine>;
+function onCamerasInit()
+{
+    if (scriptCallbackCall(ON, 'CamerasInit'))
+    {
+		game.camGame = new FXCamera();
+		
+		FlxG.cameras.reset(camGame);
+		FlxG.cameras.setDefaultDrawTarget(camGame, true);
+        
+		game.camHUD = new FXCamera();
+
+		FlxG.cameras.add(camHUD, false);
+    }
+
+    scriptCallbackCall(POST, 'CamerasInit');
+
+    return Function_Stop;
+}
+
+// Characters
 
 var characters:FlxTypedGroup<Character>;
 var charactersArray:Array<Array<Character>> = [];
 
-var strums:FlxTypedGroup<Strum>;
+var playerCharacters:FlxTypedGroup<Character>;
+var opponentCharacters:FlxTypedGroup<Character>;
+var extraCharacters:FlxTypedGroup<Character>;
 
 var characterFactory:String -> CharacterType -> StrumLine = (id, type) -> new Character(id, type);
+
+function initCharacters()
+{
+    if (scriptCallbackCall(ON, 'CharactersInit'))
+    {
+        characters = new FlxTypedGroup<Character>();
+
+        playerCharacters = new FlxTypedGroup<Character>();
+        opponentCharacters = new FlxTypedGroup<Character>();
+        extraCharacters = new FlxTypedGroup<Character>();
+        
+        for (index => strl in chart.strumLines)
+        {
+            for (charIndex => char in strl.characters)
+            {
+                final character:Character = characterFactory(char, strl.type);
+                addCharacter(character);
+
+                charactersArray[index] ??= [];
+
+                charactersArray[index][charIndex] = character;
+            }
+        }
+    }
+
+    scriptCallbackCall(POST, 'CharactersInit');
+}
+
+function addCharacter(char:Character)
+{
+    if (scriptCallbackCall(ON, 'CharacterAdd', null, [char], []))
+    {
+        switch (char.type)
+        {
+            case 'player':
+                playerCharacters?.add(char);
+
+            case 'opponent':
+                opponentCharacters?.add(char);
+
+            case 'extra':
+                extraCharacters?.add(char);
+        }
+
+        characters?.add(char);
+
+        add(char);
+    }
+
+    scriptCallbackCall(POST, 'CharacterAdd', null, [char], []);
+}
+
+// StrumLines
+
+var strumLines:FlxTypedGroup<StrumLine>;
+
+var playerStrumLines:FlxTypedGroup<StrumLine>;
+var opponentStrumLines:FlxTypedGroup<StrumLine>;
+var extraStrumLines:FlxTypedGroup<StrumLine>;
+
+var strums:FlxTypedGroup<Strum>;
 
 function initStrumLines()
 {
@@ -89,7 +175,9 @@ function initStrumLines()
         add(strumLines = new FlxTypedGroup<StrumLine>());
         strumLines.camera = camHUD;
 
-        characters = new FlxTypedGroup<Character>();
+        playerStrumLines = new FlxTypedGroup<StrumLine>();
+        opponentStrumLines = new FlxTypedGroup<StrumLine>();
+        extraStrumLines = new FlxTypedGroup<StrumLine>();
 
         strums = new FlxTypedGroup<Strum>();
 
@@ -127,17 +215,6 @@ function initStrumLines()
 
         for (index => strl in chart.strumLines)
         {
-            for (charIndex => char in strl.characters)
-            {
-                final character:Character = characterFactory(char, strl.type);
-                characters.add(character);
-                add(character);
-
-                charactersArray[index] ??= [];
-
-                charactersArray[index][charIndex] = character;
-            }
-
             final strumLine:StrumLine = new StrumLine(strl.file, strl.type, index, notesArray[index], stackNote);
             strumLine.noteSpawnCallback = spawnNote;
             strumLine.noteHitCallback = hitNote;
@@ -146,20 +223,36 @@ function initStrumLines()
             var strumHeight:Float = 0;
 
             for (strum in strumLine.strums)
-            {
-                strums.add(strum);
-
                 strumHeight = Math.max(strumHeight, strum.height);
-            }
 
             strumLine.x = strumLine.type == 'opponent' ? strl.position.x : FlxG.width - strl.position.x - (strumLine.config.config.length - 1) * strumLine.config.spacing - strumLine.strums.members[strumLine.strums.members.length - 1].width;
             strumLine.y = ClientPrefs.data.downScroll ? FlxG.height - strl.position.y - strumHeight : strl.position.y;
             
-            strumLines.add(strumLine);
+            addStrumLine(strumLine);
         }
     }
 
     scriptCallbackCall(POST, 'StrumLinesInit');
+}
+
+function addStrumLine(strl:StrumLine)
+{
+    switch (strl.type)
+    {
+        case 'player':
+            playerStrumLines?.add(strl);
+
+        case 'opponent':
+            opponentStrumLines?.add(strl);
+
+        case 'extra':
+            extraStrumLines?.add(strl);
+    }
+
+    strumLines?.add(strl);
+
+    for (strum in strl.strums)
+        strums?.add(strum);
 }
 
 var lastStackedNote:Note = null;
@@ -281,8 +374,25 @@ function justReleasedKey(event:KeyboardEvent)
 
 var uiGroup:FlxTypedGroup<FlxObject>;
 var healthBar:Bar;
+var scoreText:FlxText;
 
-camGame.bgColor = FlxColor.GRAY;
+var icons:FlxTypedGroup<Icon>;
+
+var playerIcons:FlxTypedGroup<Icon>;
+var opponentIcons:FlxTypedGroup<Icon>;
+var extraIcons:FlxTypedGroup<Icon>;
+
+var iconP1(get, never):Icon;
+function get_iconP1():Icon
+    return playerIcons.members[0];
+
+var iconP2(get, never):Icon;
+function get_iconP2():Icon
+    return opponentIcons.members[0];
+
+var iconP3(get, never):Icon;
+function get_iconP3():Icon
+    return extraIcons.members[0];
 
 function initHud()
 {
@@ -296,6 +406,11 @@ function initHud()
         healthBar.x = FlxG.width / 2 - healthBar.width / 2;
         healthBar.y = FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9);
         uiGroup.add(healthBar);
+
+        scoreText = new FlxText(0, healthBar.y + 40, FlxG.width, 'Score      Misses      Rating');
+        scoreText.setFormat(Paths.font('vcr.ttf'), 17, FlxColor.WHITE, 'center', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+        scoreText.borderSize = 1.25;
+        uiGroup.add(scoreText);
     }
 
     scriptCallbackCall(POST, 'HudInit');
@@ -457,10 +572,21 @@ function onDestroy()
     FlxG.stage.removeEventListener('keyDown', justPressedKey);
     FlxG.stage.removeEventListener('keyUp', justReleasedKey);
 
+    
     for (vocal in vocals.copy())
         Conductor.synchronizedSounds.remove(vocal);
 
+
     characters?.destroy();
+
+    playerCharacters?.destroy();
+    opponentCharacters?.destroy();
+    extraCharacters?.destroy();
+
+
+    playerStrumLines?.destroy();
+    opponentStrumLines?.destroy();
+    playerStrumLines?.destroy();
 
     strums?.destroy();
 }
