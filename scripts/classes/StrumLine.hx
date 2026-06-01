@@ -80,10 +80,6 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
         for (chartNote in chartNotes ?? [])
         {
             final time:Float = chartNote[0];
-
-            if (time > Conductor.sectionCrochet * 2)
-                continue;
-
             final data:Int = chartNote[1];
             final length:Float = chartNote[2];
             final type:String = chartNote[3];

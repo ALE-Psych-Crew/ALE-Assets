@@ -51,7 +51,7 @@ public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
 
 var totalNoteTypes:Array<String> = [];
 
-var allowNotesSpawning:Bool = false;
+var allowNotesSpawning:Bool = true;
 
 function postCreate()
 {
@@ -70,30 +70,11 @@ function postCreate()
         initSounds();
 
         initSong();
+
+        moveCamera(0);
     }
 
     scriptCallbackCall(POST, 'Create');
-}
-
-// Cameras
-
-function onCamerasInit()
-{
-    if (scriptCallbackCall(ON, 'CamerasInit'))
-    {
-		game.camGame = new FXCamera();
-		
-		FlxG.cameras.reset(camGame);
-		FlxG.cameras.setDefaultDrawTarget(camGame, true);
-        
-		game.camHUD = new FXCamera();
-
-		FlxG.cameras.add(camHUD, false);
-    }
-
-    scriptCallbackCall(POST, 'CamerasInit');
-
-    return Function_Stop;
 }
 
 // Characters
@@ -299,6 +280,9 @@ function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
 
     if (result)
     {
+        if (note.type == 'arrow')
+            note.strumLine.splashes.members[note.data].splash();
+
         lastHitNoteCharacter.sing(note.type != 'arrow' && !lastHitNoteCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.sing);
     }
 
@@ -547,6 +531,94 @@ function addVocal(sound:Sound)
     scriptCallbackCall(POST, 'VocalAdd', null, [sound], []);
 }
 
+// Camera
+
+function onCamerasInit()
+{
+    if (scriptCallbackCall(ON, 'CamerasInit'))
+    {
+		game.camGame = new FXCamera();
+
+        final camGame:FXCamera = cast camGame;
+		
+        camGame.speed = 1;
+        camGame.zoomSpeed = 1;
+        camGame.bopModulo = 4;
+        // camGame.zoom = camGame.targetZoom = stage.config.zoom;
+
+		FlxG.cameras.reset(camGame);
+		FlxG.cameras.setDefaultDrawTarget(camGame, true);
+        
+		game.camHUD = new FXCamera();
+
+		FlxG.cameras.add(camHUD, false);
+    }
+
+    scriptCallbackCall(POST, 'CamerasInit');
+
+    return Function_Stop;
+}
+
+var allowCameraMoving:Bool = true;
+
+var cameraTarget:Character;
+
+function moveCamera(?char:OneOfTwo<Character, Int>, ?force:Bool = false)
+{
+    var character:Character = null;
+
+    if (char is FlxSprite)
+    {
+        character = cast char;
+    } else {
+        final songSection = chart.sections[char];
+        
+        if (songSection != null)
+            character = charactersArray[songSection.camera[0]][songSection.camera[1]];
+    }
+
+    if (character != null)
+        cameraTarget = character;
+
+    if (scriptCallbackCall(ON, 'CameraMove', null, [cameraTarget], []))
+    {
+        if ((allowCameraMoving || force) && character != null)
+        {
+            final pos:Point = getCharacterCamera(character);
+
+            cast(camGame, FXCamera).position.set(pos.x, pos.y);
+        }
+    }
+
+    scriptCallbackCall(POST, 'CameraMove', null, [cameraTarget], []);
+}
+
+function getCharacterCamera(character:Character):Point
+{
+    final result:Point = {x: character.getMidpoint().x + character._castConfig.cameraOffset.x * (character.type == 'player' ? -1 : 1), y: character.getMidpoint().y + character._castConfig.cameraOffset.y};
+
+    /*
+    if (stage.config.charactersCamera != null)
+    {
+        var offset:Point = null;
+
+        if (stage.config.charactersCamera.type != null)
+            offset = Reflect.getProperty(stage.config.charactersCamera.type, cast character.type);
+
+        if (stage.config.charactersCamera.id != null)
+            offset = Reflect.getProperty(stage.config.charactersCamera.id, character.id);
+
+        if (offset != null)
+        {
+            result.x += offset.x ?? 0;
+            result.y += offset.y ?? 0;
+        }
+    }
+        */
+
+    return result;
+}
+
 // Story
 
 function exit()
@@ -560,33 +632,66 @@ function exit()
 
 // ScriptedState Callbacks
 
+function onUpdate(elapsed:Float)
+{
+    if (FlxG.keys.justPressed.SPACE)
+        if (Conductor.music.playing)
+            Conductor.pause();
+        else
+            Conductor.resume();
+}
+
+function onSectionHit(curSection:Int)
+{
+    if (scriptCallbackCall(ON, 'SectionHit'))
+    {
+        // SUPER CALL
+
+        moveCamera(curSection);
+    }
+
+    scriptCallbackCall(POST, 'SectionHit');
+}
+
 function onMusicComplete()
 {
-    exit();
+    if (scriptCallbackCall(ON, 'MusicComplete'))
+    {
+        // SUPER CALL
+
+        exit();
+    }
+
+    scriptCallbackCall(POST, 'MusicComplete');
 }
 
 function onDestroy()
 {
-    // SUPER CALL
+    if (scriptCallbackCall(ON, 'Destroy'))
+    {
+        // SUPER CALL
 
-    FlxG.stage.removeEventListener('keyDown', justPressedKey);
-    FlxG.stage.removeEventListener('keyUp', justReleasedKey);
+        FlxG.stage.removeEventListener('keyDown', justPressedKey);
+        FlxG.stage.removeEventListener('keyUp', justReleasedKey);
 
-    
-    for (vocal in vocals.copy())
-        Conductor.synchronizedSounds.remove(vocal);
-
-
-    characters?.destroy();
-
-    playerCharacters?.destroy();
-    opponentCharacters?.destroy();
-    extraCharacters?.destroy();
+        
+        for (vocal in vocals.copy())
+            Conductor.synchronizedSounds.remove(vocal);
 
 
-    playerStrumLines?.destroy();
-    opponentStrumLines?.destroy();
-    playerStrumLines?.destroy();
+        characters?.destroy();
 
-    strums?.destroy();
+        playerCharacters?.destroy();
+        opponentCharacters?.destroy();
+        extraCharacters?.destroy();
+
+
+        playerStrumLines?.destroy();
+        opponentStrumLines?.destroy();
+        playerStrumLines?.destroy();
+
+        strums?.destroy();
+    }
+
+    scriptCallbackCall(POST, 'Destroy');
 }

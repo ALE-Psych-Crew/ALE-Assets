@@ -21,6 +21,9 @@ class Splash extends StrumLineObject
 
         playAnim(strumLineConfig.splash[FlxG.random.int(0, strumLineConfig.splash.length - 1)]);
 
+        centerOffsets();
+        centerOrigin();
+
         if (strum != null)
         {
             x = strum.x + strum.width / 2 - width / 2;

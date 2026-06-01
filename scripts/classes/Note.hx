@@ -57,26 +57,32 @@ class Note extends StrumLineObject
 
     public var timeDistance:Float = 0;
 
-    var speedMultiplier:Float = 0.45;
+    public var speedMultiplier:Float = 0.45;
 
-    var direction:Float = 0;
+    public var direction:Float = 0;
 
-    var copyAngle:Bool = true;
-    var angleOffset:Float = 0;
+    public var copyAngle:Bool = true;
+    public var angleOffset:Float = 0;
 
-    var copyDirection:Bool = true;
-    var directionOffset:Float = 90;
+    public var copyDirection:Bool = true;
+    public var directionOffset:Float = 90;
 
-    var copyAlpha:Bool = true;
+    public var copyAlpha:Bool = true;
     public var alphaMultiplier:Float = 1;
 
-    var copyX:Bool = true;
+    public var copyX:Bool = true;
     public var xOffset:Float = 0;
 
-    var copyY:Bool = true;
+    public var copyY:Bool = true;
     public var yOffset:Float = 0;
 
-    var sustainClipping:Bool = true;
+    public var copySkewX:Bool = true;
+    public var skewXOffset:Float = 0;
+
+    public var copySkewY:Bool = true;
+    public var skewYOffset:Float = 0;
+
+    public var sustainClipping:Bool = true;
 
     public function followStrum()
     {
@@ -89,6 +95,12 @@ class Note extends StrumLineObject
 
         if (copyAlpha)
             alpha = strum.alpha * alphaMultiplier;
+
+        if (copySkewX)
+            skew.x = strum.skew.x + skewXOffset;
+
+        if (copySkewY)
+            skew.y = strum.skew.y + skewYOffset;
 
         if (copyX || copyY)
         {
