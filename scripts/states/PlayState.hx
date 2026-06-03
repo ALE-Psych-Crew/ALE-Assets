@@ -33,6 +33,8 @@ final hud:JsonHud = {
     directory: 'default',
 };
 
+final stage:JsonStage;
+
 var startTime:Float = 0;
 
 public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
@@ -47,6 +49,8 @@ public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
     songRoute = CoolUtil.searchComplexFile('songs/' + song);
 
     chart = Formatter.getChart(song, difficulty);
+
+    stage = new Stage(Formatter.getStage(chart.stage));
 }
 
 var totalNoteTypes:Array<String> = [];
@@ -68,6 +72,8 @@ function postCreate()
         initHud();
 
         initSounds();
+
+        stage.change(chart.stage);
 
         initSong();
 
@@ -144,6 +150,8 @@ function addCharacter(char:Character)
         characters?.add(char);
 
         add(char);
+
+        resetCharacterPosition(char);
     }
 
     scriptCallbackCall(POST, 'CharacterAdd', null, [char], []);
@@ -198,6 +206,62 @@ function getCharacterGroup(type:CharacterType)
         case 'extra':
             extraCharacters;
     }
+}
+
+var lastPositionResetCharacter:Character = null;
+
+function resetCharacterPosition(character:Character)
+{
+    lastPositionResetCharacter = character;
+
+    if (scriptCallbackCall(ON, 'CharacterPositionReset', null, [character], []))
+    {
+        character.x = character._castConfig.properties.x;
+        character.y = character._castConfig.properties.y;
+
+        if (stage.config.charactersOffset != null)
+        {
+            var offset:Point = null;
+
+            if (stage.config.charactersOffset.type != null)
+                offset = Reflect.getProperty(stage.config.charactersOffset.type, cast character.type);
+
+            if (stage.config.charactersOffset.id != null)
+                offset = Reflect.getProperty(stage.config.charactersOffset.id, character.id);
+
+            if (offset != null)
+            {
+                character.x += offset.x ?? 0;
+                character.y += offset.y ?? 0;
+            }
+        }
+    }
+
+    scriptCallbackCall(POST, 'CharacterPositionReset', null, [character], []);
+}
+
+function getCharacterCamera(character:Character):Point
+{
+    final result:Point = {x: character.getMidpoint().x + character._castConfig.cameraOffset.x * (character.type == 'player' ? -1 : 1), y: character.getMidpoint().y + character._castConfig.cameraOffset.y};
+
+    if (stage.config.charactersCamera != null)
+    {
+        var offset:Point = null;
+
+        if (stage.config.charactersCamera.type != null)
+            offset = Reflect.getProperty(stage.config.charactersCamera.type, cast character.type);
+
+        if (stage.config.charactersCamera.id != null)
+            offset = Reflect.getProperty(stage.config.charactersCamera.id, character.id);
+
+        if (offset != null)
+        {
+            result.x += offset.x ?? 0;
+            result.y += offset.y ?? 0;
+        }
+    }
+
+    return result;
 }
 
 // StrumLines
@@ -737,32 +801,6 @@ function moveCamera(?char:OneOfTwo<Character, Int>, ?force:Bool = false)
     }
 
     scriptCallbackCall(POST, 'CameraMove', null, [cameraTarget], []);
-}
-
-function getCharacterCamera(character:Character):Point
-{
-    final result:Point = {x: character.getMidpoint().x + character._castConfig.cameraOffset.x * (character.type == 'player' ? -1 : 1), y: character.getMidpoint().y + character._castConfig.cameraOffset.y};
-
-    /*
-    if (stage.config.charactersCamera != null)
-    {
-        var offset:Point = null;
-
-        if (stage.config.charactersCamera.type != null)
-            offset = Reflect.getProperty(stage.config.charactersCamera.type, cast character.type);
-
-        if (stage.config.charactersCamera.id != null)
-            offset = Reflect.getProperty(stage.config.charactersCamera.id, character.id);
-
-        if (offset != null)
-        {
-            result.x += offset.x ?? 0;
-            result.y += offset.y ?? 0;
-        }
-    }
-        */
-
-    return result;
 }
 
 // Story
