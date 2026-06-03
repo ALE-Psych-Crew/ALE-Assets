@@ -86,6 +86,22 @@ var playerCharacters:FlxTypedGroup<Character>;
 var opponentCharacters:FlxTypedGroup<Character>;
 var extraCharacters:FlxTypedGroup<Character>;
 
+var bf(get, never):Character;
+function get_bf():Character
+    return playerCharacters.members[0];
+
+var boyfriend(get, never):Character;
+function get_boyfriend():Character
+    return playerCharacters.members[0];
+
+var dad(get, never):Character;
+function get_dad():Character
+    return opponentCharacters.members[0];
+
+var gf(get, never):Character;
+function get_gf():Character
+    return extraCharacters.members[0];
+
 var characterFactory:String -> CharacterType -> StrumLine = (id, type) -> new Character(id, type);
 
 function initCharacters()
@@ -115,21 +131,15 @@ function initCharacters()
     scriptCallbackCall(POST, 'CharactersInit');
 }
 
+var lastAddedCharacter:Character = null;
+
 function addCharacter(char:Character)
 {
+    lastAddedCharacter = char;
+
     if (scriptCallbackCall(ON, 'CharacterAdd', null, [char], []))
     {
-        switch (char.type)
-        {
-            case 'player':
-                playerCharacters?.add(char);
-
-            case 'opponent':
-                opponentCharacters?.add(char);
-
-            case 'extra':
-                extraCharacters?.add(char);
-        }
+        getCharacterGroup(char.type)?.add(char);
 
         characters?.add(char);
 
@@ -137,6 +147,57 @@ function addCharacter(char:Character)
     }
 
     scriptCallbackCall(POST, 'CharacterAdd', null, [char], []);
+}
+
+var lastChangedCharacter:Character = null;
+
+function changeCharacter(char:Character, newChar:String)
+{
+    lastChangedCharacter = char;
+
+    if (scriptCallbackCall(ON, 'CharacterChange', null, [char, newChar], [newChar]))
+    {
+        final stateIndex = members?.indexOf(char);
+
+        remove(char, true);
+        
+        final globalIndex = characters?.members?.indexOf(char);
+
+        characters?.remove(char, true);
+
+        final specificGroup = getCharacterGroup(char);
+
+        final specificIndex = specificGroup?.members?.indexOf(char);
+
+        specificGroup?.remove(char, true);
+
+        char?.destroy();
+
+        final newChar = new Character(newChar, char.type);
+
+        characters?.insert(globalIndex, newChar);
+        
+        specificGroup?.insert(specificIndex, newChar);
+
+        insert(stateIndex, newChar);
+    }
+
+    scriptCallbackCall(POST, 'CharacterChange', null, [char, newChar], [newChar]);
+}
+
+function getCharacterGroup(type:CharacterType)
+{
+    return switch (type)
+    {
+        case 'opponent':
+            opponentCharacters;
+
+        case 'player':
+            playerCharacters;
+
+        case 'extra':
+            extraCharacters;
+    }
 }
 
 // StrumLines
@@ -216,24 +277,33 @@ function initStrumLines()
     scriptCallbackCall(POST, 'StrumLinesInit');
 }
 
+var lastAddedStrumLine:StrumLine = null;
+
 function addStrumLine(strl:StrumLine)
 {
-    switch (strl.type)
+    lastAddedStrumLine = strl;
+
+    if (scriptCallbackCall(ON, 'StrumLineAdd', null, [strl], []))
     {
-        case 'player':
-            playerStrumLines?.add(strl);
+        switch (strl.type)
+        {
+            case 'player':
+                playerStrumLines?.add(strl);
 
-        case 'opponent':
-            opponentStrumLines?.add(strl);
+            case 'opponent':
+                opponentStrumLines?.add(strl);
 
-        case 'extra':
-            extraStrumLines?.add(strl);
+            case 'extra':
+                extraStrumLines?.add(strl);
+        }
+
+        strumLines?.add(strl);
+
+        for (strum in strl.strums)
+            strums?.add(strum);
     }
 
-    strumLines?.add(strl);
-
-    for (strum in strl.strums)
-        strums?.add(strum);
+    scriptCallbackCall(POST, 'StrumLineAdd', null, [strl]);
 }
 
 var lastStackedNote:Note = null;
@@ -280,9 +350,6 @@ function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
 
     if (result)
     {
-        if (note.type == 'arrow')
-            note.strumLine.splashes.members[note.data].splash();
-
         lastHitNoteCharacter.sing(note.type != 'arrow' && !lastHitNoteCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.sing);
     }
 
@@ -386,19 +453,98 @@ function initHud()
         uiGroup.camera = camHUD;
         add(uiGroup);
 
-        healthBar = new Bar('hud/' + hud.directory + '/bar', 'hud/' + hud.directory + '/barFill');
+        healthBar = new Bar('hud/' + hud.directory + '/bar', 'hud/' + hud.directory + '/barFill', false);
         healthBar.x = FlxG.width / 2 - healthBar.width / 2;
         healthBar.y = FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9);
         uiGroup.add(healthBar);
+
+        uiGroup.add(icons = new FlxTypedGroup<Icon>());
+        icons.camera = camHUD;
+
+        playerIcons = new FlxTypedGroup<Icon>();
+        opponentIcons = new FlxTypedGroup<Icon>();
+        extraIcons = new FlxTypedGroup<Icon>();
 
         scoreText = new FlxText(0, healthBar.y + 40, FlxG.width, 'Score      Misses      Rating');
         scoreText.setFormat(Paths.font('vcr.ttf'), 17, FlxColor.WHITE, 'center', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
         scoreText.borderSize = 1.25;
         uiGroup.add(scoreText);
+
+        addIcon(new Icon(bf == null ? gf._castConfig.icon : bf._castConfig.icon, 'player'));
+        addIcon(new Icon(dad == null ? gf._castConfig.icon : dad._castConfig.icon, 'opponent'));
+
+        healthBar.fillFront.color = CoolUtil.colorFromString(bf == null ? gf._castConfig.barColor : bf._castConfig.barColor);
+        healthBar.fillBack.color = CoolUtil.colorFromString(dad == null ? gf._castConfig.barColor : dad._castConfig.barColor);
     }
 
     scriptCallbackCall(POST, 'HudInit');
 }
+
+var lastAddedIcon:Icon = null;
+
+function addIcon(icon:Icon)
+{
+    lastAddedIcon = icon;
+
+    if (scriptCallbackCall(ON, 'IconAdd', null, [icon], []))
+    {
+        icon.bar = healthBar;
+
+        switch (icon.type)
+        {
+            case 'opponent':
+                opponentIcons.add(icon);
+                
+            case 'player':
+                playerIcons.add(icon);
+
+            case 'extra':
+                extraIcons.add(icon);
+        }
+
+        icons.add(icon);
+    }
+
+    scriptCallbackCall(POST, 'IconAdd', null, [icon], []);
+}
+
+function changeIcon(icon:Icon, newIcon:String)
+{
+    final globalIndex = icons?.members?.indexOf(icon);
+
+    icons?.remove(icon, true);
+
+    final specificGroup = getIconGroup(icon.type);
+
+    final specificIndex = specificGroup.members?.indexOf(icon);
+
+    specificGroup?.remove(icon, true);
+
+    icon?.destroy();
+
+    final newIcon = new Icon(newIcon, icon.type);
+    newIcon.bar = healthBar;
+
+    icons?.insert(globalIndex, newIcon);
+
+    specificGroup?.insert(specificIndex, newIcon);
+}
+
+function getIconGroup(type:CharacterType)
+{
+    return switch (type)
+    {
+        case 'opponent':
+            opponentIcons;
+            
+        case 'player':
+            playerIcons;
+
+        case 'extra':
+            extraIcons;
+    }
+}
+
 
 // Audios
 
@@ -691,6 +837,11 @@ function onDestroy()
         playerStrumLines?.destroy();
 
         strums?.destroy();
+
+
+        playerIcons?.destroy();
+        opponentIcons?.destroy();
+        extraIcons?.destroy();
     }
 
     scriptCallbackCall(POST, 'Destroy');

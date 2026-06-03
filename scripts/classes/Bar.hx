@@ -1,6 +1,7 @@
 package;
 
 import flixel.graphics.FlxGraphic;
+import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 
 class Bar extends scripting.haxe.ScriptedFlxSpriteGroup
@@ -31,7 +32,7 @@ class Bar extends scripting.haxe.ScriptedFlxSpriteGroup
 
         fillFront.clipRect.set(leftToRight ? 0 : fillFront.width - factor, 0, leftToRight ? factor : fillFront.width, fillFront.height);
 
-        return value;
+        return percent = value;
     }
 
     public function new(main:String, fill:String, ?leftToRight:Bool, ?percent:Float)
@@ -58,5 +59,10 @@ class Bar extends scripting.haxe.ScriptedFlxSpriteGroup
         this.leftToRight = leftToRight ?? true;
 
         this.percent = percent ?? 50;
+    }
+
+    public function getMiddle():FlxPoint
+    {
+        return FlxPoint.get(fillFront.x + (leftToRight ? fillFront.clipRect.width : fillFront.clipRect.x), fillFront.y + fillFront.height / 2);
     }
 }

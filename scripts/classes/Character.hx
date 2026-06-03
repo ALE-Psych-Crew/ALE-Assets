@@ -6,7 +6,7 @@ class Character extends scripting.haxe.ScriptedBopper
 {
     public var type:CharacterType;
 
-    public var id:String;
+    public final id:String;
 
     public var _castConfig(get, never):JsonCharacter;
     function get__castConfig():JsonCharacter
@@ -20,18 +20,6 @@ class Character extends scripting.haxe.ScriptedBopper
 
         super();
 
-        change(id, type);
-
-        if (_castConfig.bopAnimations != null && _castConfig.bopAnimations.length > 0)
-            beatHit = curBeat -> if (bopTimer <= 0 && !blockBop) playAnim(_castConfig.bopAnimations[curBeat % _castConfig.bopAnimations.length]);
-
-        playAnim(_castConfig.initialAnimation ?? _castConfig?.bopAnimations[0]);
-
-        anim.onFinish.add(name -> playAnim(name + '-loop'));
-    }
-
-    public function change(id:String, ?type:CharacterType)
-    {
         if (type != null)
             this.type = type;
 
@@ -41,7 +29,12 @@ class Character extends scripting.haxe.ScriptedBopper
 
         this.id = id;
 
-        resetBlockers();
+        if (_castConfig.bopAnimations != null && _castConfig.bopAnimations.length > 0)
+            beatHit = curBeat -> if (bopTimer <= 0 && !blockBop) playAnim(_castConfig.bopAnimations[curBeat % _castConfig.bopAnimations.length]);
+
+        playAnim(_castConfig.initialAnimation ?? _castConfig?.bopAnimations[0]);
+
+        anim.onFinish.add(name -> playAnim(name + '-loop'));
     }
 
     function resetBlockers()

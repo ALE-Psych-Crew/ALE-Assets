@@ -76,6 +76,9 @@ class Note extends StrumLineObject
     public var copyY:Bool = true;
     public var yOffset:Float = 0;
 
+    public var copyScale:Bool = true;
+    public var scaleMultiplier:Float = 1;
+
     public var copySkewX:Bool = true;
     public var skewXOffset:Float = 0;
 
@@ -101,6 +104,14 @@ class Note extends StrumLineObject
 
         if (copySkewY)
             skew.y = strum.skew.y + skewYOffset;
+
+        if (copyScale)
+        {
+            scale.x = strum.scale.x * scaleMultiplier;
+            
+            if (type == 'arrow')
+                scale.y = strum.scale.y * scaleMultiplier;
+        }
 
         if (copyX || copyY)
         {
