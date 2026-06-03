@@ -5,14 +5,24 @@
     "type": "sheet",
     "animations": [
         {
-            "name": "splash1"
+            "name": "splash1",
+            "offset": {
+                "x": 95,
+                "y": 135
+            }
         },
         {
             "name": "splash2",
             "offset": {
-                "x": 10,
-                "y": 10
+                "x": 90,
+                "y": 85
             }
         }
-    ]
+    ],
+    "properties": {
+        "scale": {
+            "x": 0.7,
+            "y": 0.7
+        }
+    }
 }
