@@ -23,28 +23,43 @@ final POST:String = 'post';
 function scriptCallbackCall(type:String, name:String, ?globalArgs:Array<Dynamic>, ?hxArgs:Array<Dynamic>, ?luaArgs:Array<Dynamic>):Bool
     return true;
 
+
 // ñam
 
 final song:String;
+final week:String;
+final playlist:Array<String>;
 final difficulty:String;
-final chart:JsonChart;
+
+final songIndex:Int;
+
 final songRoute:String;
+
+final chart:JsonChart;
 final hud:JsonHud = {
     directory: 'default',
 };
 
 final stage:JsonStage;
 
+final type:SongType;
+
 var startTime:Float = 0;
 
-public function new(?newSong:String = 'bopeebo', ?newDifficulty:String = 'hard')
+public function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:String, ?newWeek:String, ?newWeekScore:Float, ?newSongIndex:Int)
 {
     // SUPER CALL
 
     Conductor.stop();
 
-    song = newSong;
-    difficulty = newDifficulty;
+    type = newType ?? 'freeplay';
+    playlist = newPlaylist ?? ['fresh'];
+    difficulty = newDifficulty ?? 'hard';
+    songIndex = newSongIndex ?? 0;
+    weekScore = newWeekScore ?? 0;
+    week = newWeek;
+
+    song = playlist[songIndex];
 
     songRoute = CoolUtil.searchComplexFile('songs/' + song);
 
@@ -57,6 +72,26 @@ var totalNoteTypes:Array<String> = [];
 
 var allowNotesSpawning:Bool = true;
 
+var health(default, set):Float = 50;
+function set_health(value:Float):Float
+    return health = FlxMath.bound(value, 0, 100);
+
+var weekScore:Float = 0;
+
+var score:Float = 0;
+var accuracyModifier:Float = 0;
+var totalNotes:Int = 0;
+var misses:Int = 0;
+var combo:Int = 0;
+
+var accuracy(get, never):Float;
+function get_accuracy():Float
+    return totalNotes == 0 ? 0 : accuracyModifier / totalNotes;
+
+var speed(default, set):Float;
+
+var botplay(default, set):Bool;
+
 function postCreate()
 {
     // SUPER CALL
@@ -66,6 +101,10 @@ function postCreate()
         initCharacters();
 
         initStrumLines();
+
+        botplay = ClientPrefs.data.botplay;
+
+        speed = chart.speed;
 
         initControls();
 
@@ -300,7 +339,7 @@ function initStrumLines()
 
                 for (note in section.notes)
                 {
-                    if (note[0] <= startTime)
+                    if (note[0] < startTime)
                         continue;
 
                     notesArray[note[4]] ??= [];
@@ -414,6 +453,9 @@ function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
 
     if (result)
     {
+        if (note.strumLine.type == 'player')
+            health += note.singHealth;
+
         lastHitNoteCharacter.sing(note.type != 'arrow' && !lastHitNoteCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.sing);
     }
 
@@ -425,6 +467,8 @@ function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
 var lastMissNote:Note = null;
 var lastMissNoteCharacter:Note = null;
 
+var _missSustain:Bool = false;
+
 function missNote(note:Note):Bool
 {
     lastMissNote = note;
@@ -434,6 +478,20 @@ function missNote(note:Note):Bool
 
     if (result)
     {
+        if (note.strumLine.type == 'player')
+        {
+            if (!_missSustain)
+            {
+                health -= note.missHealth;
+
+                if (note.type != 'arrow')
+                    _missSustain = true;
+            }
+
+            if (note.type == 'arrow')
+                _missSustain = false;
+        }
+
         lastMissNoteCharacter.miss(note.type != 'arrow' && !lastMissNoteCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.miss);
     }
 
@@ -529,10 +587,12 @@ function initHud()
         opponentIcons = new FlxTypedGroup<Icon>();
         extraIcons = new FlxTypedGroup<Icon>();
 
-        scoreText = new FlxText(0, healthBar.y + 40, FlxG.width, 'Score      Misses      Rating');
+        scoreText = new FlxText(0, healthBar.y + 40, FlxG.width, '');
         scoreText.setFormat(Paths.font('vcr.ttf'), 17, FlxColor.WHITE, 'center', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
         scoreText.borderSize = 1.25;
         uiGroup.add(scoreText);
+
+        updateScoreText();
 
         addIcon(new Icon(bf == null ? gf._castConfig.icon : bf._castConfig.icon, 'player'));
         addIcon(new Icon(dad == null ? gf._castConfig.icon : dad._castConfig.icon, 'opponent'));
@@ -609,6 +669,15 @@ function getIconGroup(type:CharacterType)
     }
 }
 
+function updateScoreText()
+{
+    if (scriptCallbackCall(ON, 'ScoreTextUpdate'))
+    {
+        scoreText.text = botplay ? 'BOTPLAY' : '';
+    }
+
+    scriptCallbackCall(POST, 'ScoreTextUpdate');
+}
 
 // Audios
 
@@ -814,10 +883,49 @@ function exit()
     scriptCallbackCall(POST, 'Exit');
 }
 
+// General Stuff
+
+function set_speed(value:Float):Float
+{
+    value = Math.max(value, FlxMath.EPSILON);
+
+    for (strl in strumLines)
+        strl.speed = value;
+
+    return speed = value;
+}
+
+function set_botplay(value:Bool):Bool
+{
+    for (strl in strumLines)
+        strl.botplay = strl.type != 'player' || value;
+
+    return botplay = value;
+}
+
+function updateHealth()
+{
+    if (scriptCallbackCall(ON, 'HealthUpdate'))
+    {
+        healthBar.percent = health;
+    }
+
+    scriptCallbackCall(POST, 'HealthUpdate');
+}
+
 // ScriptedState Callbacks
+
+var _lastHealth:Float = -1;
 
 function onUpdate(elapsed:Float)
 {
+    if (_lastHealth != health)
+    {
+        _lastHealth = health;
+
+        updateHealth();
+    }
+
     if (FlxG.keys.justPressed.SPACE)
         if (Conductor.music.playing)
             Conductor.pause();

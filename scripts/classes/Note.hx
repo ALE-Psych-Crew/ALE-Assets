@@ -38,6 +38,9 @@ class Note extends StrumLineObject
         return speed;
     }
 
+    public var singHealth:Float;
+    public var missHealth:Float;
+
     public function new(id:String, strlData:JsonStrumLineConfig, type:NoteType, data:Int, rgb:RGBShader)
     {
         allowOffset = false;
@@ -53,6 +56,9 @@ class Note extends StrumLineObject
         y = FlxG.height * 2;
 
         updateHitbox();
+
+        singHealth = type == 'arrow' ? 1.25 : 0.625;
+        missHealth = type == 'arrow' ? 2.5 : 1.25;
     }
 
     public var timeDistance:Float = 0;
