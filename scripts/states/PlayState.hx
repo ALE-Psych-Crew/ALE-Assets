@@ -968,7 +968,7 @@ function onDestroy()
 
         
         for (vocal in vocals.copy())
-            Conductor.synchronizedSounds.remove(vocal);
+            Conductor.synchronizedSounds?.remove(vocal);
 
 
         characters?.destroy();
