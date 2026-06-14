@@ -2,7 +2,7 @@ package;
 
 public var characters:FlxTypedGroup<Character>;
 
-public var characterArray:Array<Array<Character>>;
+public var charactersArray:Array<Array<Character>> = [];
 
 public var playerCharacters:FlxTypedGroup<Character>;
 public var opponentCharacters:FlxTypedGroup<Character>;
@@ -25,7 +25,12 @@ public function initCharacters()
             for (index => char in strl.characters)
             {
                 final character:Character = new Character(char, strl.type);
+                
                 addCharacter(character);
+
+                charactersArray[strlIndex] ??= [];
+
+                charactersArray[strlIndex][index] = character;
             }
         }
     }
@@ -52,6 +57,8 @@ function addCharacter(char:Character)
             case EXTRA:
                 extraCharacters.add(nextCharacterToAdd);
         }
+
+        characters.add(char);
 
         add(nextCharacterToAdd);
 

@@ -25,6 +25,8 @@ static final PLAYER:String = 'player';
 static final OPPONENT:String = 'opponent';
 static final EXTRA:String = 'extra';
 
+static final ARROW:String = 'arrow';
+
 function postCreate()
 {
     create();
@@ -45,33 +47,11 @@ ClientPrefs.data.botplay = true;
 
 // Real Shit
 
+public var startTime:Float = 0;
+
+public var spawnNotes:Bool = true;
+
 public var chart:ALESong;
-
-function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:String, ?newWeek:String, ?newWeekScore:Float, ?newSongIndex:Int)
-{
-    newType ??= FREEPLAY;
-    newPlaylist ??= ['Bopeebo'];
-    newDifficulty ??= 'normal';
-    newWeekScore ??= 0;
-    newSongIndex ??= 0;
-
-    type = newType;
-
-    playlist = newPlaylist;
-    difficulty = newDifficulty;
-    songIndex = newSongIndex;
-    song = playlist[songIndex];
-
-    week = newWeek;
-    weekScore = newWeekScore;
-
-    songRoute = CoolUtil.searchComplexFile('songs/' + song);
-
-    chart = Formatter.getChart(song, difficulty);
-
-    stage = new Stage(Formatter.getStage(chart.stage));
-}
-
 public var hud:ALEHud = {
     directory: 'default'
 };
@@ -114,6 +94,31 @@ public function set_health(value:Float):Float
     return health;
 }
 
+function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:String, ?newWeek:String, ?newWeekScore:Float, ?newSongIndex:Int)
+{
+    newType ??= FREEPLAY;
+    newPlaylist ??= ['Bopeebo'];
+    newDifficulty ??= 'normal';
+    newWeekScore ??= 0;
+    newSongIndex ??= 0;
+
+    type = newType;
+
+    playlist = newPlaylist;
+    difficulty = newDifficulty;
+    songIndex = newSongIndex;
+    song = playlist[songIndex];
+
+    week = newWeek;
+    weekScore = newWeekScore;
+
+    songRoute = CoolUtil.searchComplexFile('songs/' + song);
+
+    chart = Formatter.getChart(song, difficulty);
+
+    stage = new Stage(Formatter.getStage(chart.stage));
+}
+
 function create()
 {
     superDuper.create();
@@ -125,6 +130,8 @@ function create()
         initStrumLines();
 
         initControls();
+
+        initSounds();
 
         startSong();
     }
@@ -152,6 +159,9 @@ function destroy()
     {
         FlxG.stage.removeEventListener('keyDown', justPressedKey);
         FlxG.stage.removeEventListener('keyUp', justReleasedKey);
+
+        for (vocal in vocals.copy())
+            Conductor.synchronizedSounds?.remove(vocal);
 
         characters?.destroy();
 

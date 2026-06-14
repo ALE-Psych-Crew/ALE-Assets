@@ -31,25 +31,29 @@ public function initStrumLines()
 
         final notes = [];
 
-        for (section in chart.sections)
+        if (spawnNotes)
         {
-            if (section.changeBPM)
-                Conductor.bpm = section.bpm;
-
-            for (note in section.notes)
+            for (section in chart.sections)
             {
-                notes[note[4]] ??= [];
+                if (section.changeBPM)
+                    Conductor.bpm = section.bpm;
 
-                continue;
+                for (note in section.notes)
+                {
+                    notes[note[4]] ??= [];
 
-                notes[note[4]].push([
-                    note[0],
-                    note[1],
-                    note[2],
-                    note[3],
-                    note[5],
-                    Conductor.stepCrochet
-                ]);
+                    if (note[0] > Conductor.sectionCrochet * 2)
+                        continue;
+
+                    notes[note[4]].push([
+                        note[0],
+                        note[1],
+                        note[2],
+                        note[3],
+                        note[5],
+                        Conductor.stepCrochet
+                    ]);
+                }
             }
         }
 
@@ -57,8 +61,12 @@ public function initStrumLines()
 
         for (index => strl in chart.strumLines)
         {
-            final strumLine:StrumLine = new StrumLine(strl.file, strl.type, index, notes[index]);
+            final strumLine:StrumLine = new StrumLine(strl.file, strl.type, index, notes[index], stackNote);
+            strumLine.noteSpawnCallback = spawnNote;
+            strumLine.noteHitCallback = hitNote;
+            strumLine.noteMissCallback = missNote;
             strumLine.visible = strl.visible;
+            
             addStrumLine(strumLine);
 
             var strumsOffsetX:Float = 0;
@@ -80,6 +88,75 @@ public function initStrumLines()
 
     scriptsManager.callback(POST, 'StrumLinesInit');
 }
+
+var nextNoteToStack:Note;
+
+public function stackNote(note:Note):Bool
+{
+    nextNoteToStack = note;
+
+    final result:Bool = scriptsManager.callback(ON, 'NoteStack', null, [nextNoteToStack]);
+
+    scriptsManager.callback(POST, 'NoteStack', null, [nextNoteToStack]);
+
+    return result;
+}
+
+var nextNoteToSpawn:Note;
+
+public function spawnNote(note:Note):Bool
+{
+    nextNoteToSpawn = note;
+
+    final result:Bool = scriptsManager.callback(ON, 'NoteSpawn', null, [nextNoteToSpawn]);
+
+    scriptsManager.callback(POST, 'NoteSpawn', null, [nextNoteToSpawn]);
+
+    return result;
+}
+
+var nextNoteToHit:Note;
+var nextNoteToHitCharacter:Note;
+
+public function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
+{
+    nextNoteToHit = note;
+    nextNoteToHitCharacter = characterFromNote(nextNoteToHit);
+
+    final result:Bool = scriptsManager.callback(ON, 'NoteHit', null, [nextNoteToHit, nextNoteToHitCharacter, timeDistance, removeNote], [timeDistance, removeNote]);
+
+    if (result)
+    {
+        nextNoteToHitCharacter?.sing(note.type != ARROW && !nextNoteToHitCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.sing);
+    }
+
+    scriptsManager.callback(POST, 'NoteHit', null, [nextNoteToHit, nextNoteToHitCharacter, timeDistance, removeNote], [timeDistance, removeNote]);
+
+    return result;
+}
+
+var nextNoteToMiss:Note;
+var nextNoteToMissCharacter:Note;
+
+public function missNote(note:Note):Bool
+{
+    nextNoteToMiss = note;
+    nextNoteToMissCharacter = characterFromNote(nextNoteToMiss);
+
+    final result:Bool = scriptsManager.callback(ON, 'NoteMiss', null, [nextNoteToMiss, nextNoteToMissCharacter]);
+
+    if (result)
+    {
+        nextNoteToMissCharacter?.miss(note.type != ARROW && !nextNoteToMissCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.miss);
+    }
+
+    scriptsManager.callback(POST, 'NoteMiss', null, [nextNoteToMiss, nextNoteToMissCharacter]);
+
+    return result;
+}
+
+public function characterFromNote(note:Note)
+    return charactersArray[note.character[0]][note.character[1]];
 
 var nextStrumLineToAdd:StrumLine;
 
