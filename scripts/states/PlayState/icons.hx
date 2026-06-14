@@ -8,19 +8,19 @@ public var extraIcons:FlxTypedGroup<Icon>;
 
 // FIX
 
-function get_iconP1():Icon
+public function get_iconP1():Icon
     return playerIcons.members[0];
 public var iconP1:Icon;
 
 // FIX
 
-function get_iconP2():Icon
+public function get_iconP2():Icon
     return opponentIcons.members[0];
 public var iconP2:Icon;
 
 // FIX
 
-function get_iconP3():Icon
+public function get_iconP3():Icon
     return extraIcons.members[0];
 public var iconP3:Icon;
 
@@ -70,4 +70,16 @@ function addIcon(icon:Icon)
     }
 
     scriptsManager.callback(POST, 'IconAdd', null, [nextIconToAdd]);
+}
+
+var nextIconToChange:Icon;
+
+function changeIcon(icon:Icon, id:String)
+{
+    nextIconToChange = icon;
+
+    if (scriptsManager.callback(ON, 'IconChange', null, [nextIconToChange]))
+        icon?.change(id, type);
+
+    scriptsManager.callback(POST, 'IconChange', null, [nextIconToChange]);
 }

@@ -117,3 +117,36 @@ function resetCharacterPosition(char:Character)
 
     scriptsManager.callback(POST, 'CharacterPositionReset', null, [nextCharacterToResetPosition]);
 }
+
+var nextCharacterToChange:Character;
+
+public function changeCharacter(char:Character, id:String)
+{
+    nextCharacterToChange = char;
+
+    if (scriptsManager.callback(ON, 'CharacterChange'))
+    {
+        nextCharacterToChange?.change(id);
+
+        // FIX
+
+        if (nextCharacterToChange != null)
+        {
+            switch (nextCharacterToChange)
+            {
+                case get_bf():
+                    get_iconP1()?.change(nextCharacterToChange._castConfig.icon);
+                
+                case get_dad():
+                    get_iconP2()?.change(nextCharacterToChange._castConfig.icon);
+
+                case get_gf():
+                    get_iconP3()?.change(nextCharacterToChange._castConfig.icon);
+
+                default:
+            }
+        }
+    }
+
+    scriptsManager.callback(POST, 'CharacterChange');
+}
