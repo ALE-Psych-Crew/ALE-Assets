@@ -7,8 +7,8 @@ import flixel.math.FlxRect;
 class Bar extends scripting.haxe.ScriptedFlxSpriteGroup
 {
     public final border:FlxSprite;
-    public final fillBack:FlxSprite;
-    public final fillFront:FlxSprite;
+    public final fillingBack:FlxSprite;
+    public final fillingFront:FlxSprite;
 
     public var leftToRight(default, set):Bool;
     function set_leftToRight(value:Bool):Bool
@@ -26,31 +26,31 @@ class Bar extends scripting.haxe.ScriptedFlxSpriteGroup
     {
         value = FlxMath.bound(value, 0, 100);
 
-        fillFront.clipRect ??= FlxRect.get();
+        fillingFront.clipRect ??= FlxRect.get();
 
-        final factor:Float = fillFront.width * (value / 100);
+        final factor:Float = fillingFront.width * (value / 100);
 
-        fillFront.clipRect.set(leftToRight ? 0 : fillFront.width - factor, 0, leftToRight ? factor : fillFront.width, fillFront.height);
+        fillingFront.clipRect.set(leftToRight ? 0 : fillingFront.width - factor, 0, leftToRight ? factor : fillingFront.width, fillingFront.height);
 
         return percent = value;
     }
 
-    public function new(main:String, fill:String, ?leftToRight:Bool, ?percent:Float)
+    public function new(main:String, filling:String, ?leftToRight:Bool, ?percent:Float)
     {
         super();
 
-        fillBack = new FlxSprite(0, 0, Paths.image(fill));
-        fillBack.color = FlxColor.RED;
-        add(fillBack);
+        fillingBack = new FlxSprite(0, 0, Paths.image(filling));
+        fillingBack.color = FlxColor.RED;
+        add(fillingBack);
 
-        fillFront = new FlxSprite(0, 0, Paths.image(fill));
-        fillFront.color = FlxColor.LIME;
-        add(fillFront);
+        fillingFront = new FlxSprite(0, 0, Paths.image(filling));
+        fillingFront.color = FlxColor.LIME;
+        add(fillingFront);
 
         border = new FlxSprite(0, 0, Paths.image(main));
         add(border);
 
-        for (spr in [fillFront, fillBack])
+        for (spr in [fillingFront, fillingBack])
         {
             spr.x = border.x + border.width / 2 - spr.width / 2;
             spr.y = border.y + border.height / 2 - spr.height / 2;
@@ -63,6 +63,6 @@ class Bar extends scripting.haxe.ScriptedFlxSpriteGroup
 
     public function getMiddle():FlxPoint
     {
-        return FlxPoint.get(fillFront.x + (leftToRight ? fillFront.clipRect.width : fillFront.clipRect.x), fillFront.y + fillFront.height / 2);
+        return FlxPoint.get(fillingFront.x + (leftToRight ? fillingFront.clipRect.width : fillingFront.clipRect.x), fillingFront.y + fillingFront.height / 2);
     }
 }

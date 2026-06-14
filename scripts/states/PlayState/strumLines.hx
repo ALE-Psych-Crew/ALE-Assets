@@ -42,9 +42,6 @@ public function initStrumLines()
                 {
                     notes[note[4]] ??= [];
 
-                    if (note[0] > Conductor.sectionCrochet * 2)
-                        continue;
-
                     notes[note[4]].push([
                         note[0],
                         note[1],

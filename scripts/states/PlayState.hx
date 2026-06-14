@@ -49,12 +49,14 @@ ClientPrefs.data.botplay = true;
 
 public var startTime:Float = 0;
 
-public var spawnNotes:Bool = true;
+public var spawnNotes:Bool = false;
 
 public var chart:ALESong;
-public var hud:ALEHud = {
-    directory: 'default'
-};
+public var hud:ALEHud;
+
+function get_hudRoute():String
+    return hud == null ? null : 'hud/' + hud.directory;
+public var hudRoute:String;
 
 public final song:String;
 public final week:String;
@@ -86,13 +88,9 @@ public function set_botplay(value:Bool):Bool
     return botplay;
 }
 
-public var health(default, set):Float;
-public function set_health(value:Float):Float
-{
-    health = FlxMath.bound(value, 0, 100);
+// FIX
 
-    return health;
-}
+public var health:Float = 50;
 
 function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:String, ?newWeek:String, ?newWeekScore:Float, ?newSongIndex:Int)
 {
@@ -117,6 +115,10 @@ function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:Strin
     chart = Formatter.getChart(song, difficulty);
 
     stage = new Stage(Formatter.getStage(chart.stage));
+
+    hud = Paths.json('data/huds/' + stage.config.hud);
+
+    hudRoute = 'huds/' + hud.directory;
 }
 
 function create()
@@ -126,6 +128,8 @@ function create()
     if (scriptsManager.callback(ON, 'Create'))
     {
         initCharacters();
+        
+        initHud();
 
         initStrumLines();
 
@@ -139,13 +143,22 @@ function create()
     scriptsManager.callback(POST, 'Create');
 }
 
+var _lastHealth:Float = -1;
+
 function update(elapsed:Float)
 {
     superDuper.update(elapsed);
 
     if (scriptsManager.callback(ON, 'Update', [elapsed]))
     {
+        health = FlxMath.bound(health, 0, 100);
 
+        if (_lastHealth != health)
+        {
+            _lastHealth = health;
+
+            updateHealth();
+        }
     }
 
     scriptsManager.callback(POST, 'Update', [elapsed]);

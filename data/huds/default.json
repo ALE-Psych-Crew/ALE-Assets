@@ -1,3 +1,8 @@
 {
-    "format": "ale-hud-v0.1"
+    "format": "ale-hud-v0.1",
+    "directory": "default",
+    "bar": "bar",
+    "barFill": "barFilling",
+    "textSpacing": "    ",
+    "textFont": "vcr.ttf"
 }
