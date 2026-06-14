@@ -1,0 +1,94 @@
+package;
+
+public var characters:FlxTypedGroup<Character>;
+
+public var characterArray:Array<Array<Character>>;
+
+public var playerCharacters:FlxTypedGroup<Character>;
+public var opponentCharacters:FlxTypedGroup<Character>;
+public var extraCharacters:FlxTypedGroup<Character>;
+
+public function initCharacters()
+{
+    if (scriptsManager.callback(ON, 'CharactersInit'))
+    {
+        characters = new FlxTypedGroup<Character>();
+
+        playerCharacters = new FlxTypedGroup<Character>();
+        opponentCharacters = new FlxTypedGroup<Character>();
+        extraCharacters = new FlxTypedGroup<Character>();
+
+        for (strlIndex => strl in chart.strumLines)
+        {
+            strlIndex ??= [];
+
+            for (index => char in strl.characters)
+            {
+                final character:Character = new Character(char, strl.type);
+                addCharacter(character);
+            }
+        }
+    }
+
+    scriptsManager.callback(POST, 'CharactersInit');
+}
+
+var nextCharacterToAdd:Character;
+
+function addCharacter(char:Character)
+{
+    nextCharacterToAdd = char;
+
+    if (scriptsManager.callback(ON, 'CharacterAdd', null, [nextCharacterToAdd]))
+    {
+        switch (nextCharacterToAdd.type)
+        {
+            case PLAYER:
+                playerCharacters.add(nextCharacterToAdd);
+
+            case OPPONENT:
+                opponentCharacters.add(nextCharacterToAdd);
+
+            case EXTRA:
+                extraCharacters.add(nextCharacterToAdd);
+        }
+
+        add(nextCharacterToAdd);
+
+        resetCharacterPosition(nextCharacterToAdd);
+    }
+
+    scriptsManager.callback(POST, 'CharacterAdd', null, [nextCharacterToAdd]);
+}
+
+var nextCharacterToResetPosition:Character;
+
+function resetCharacterPosition(char:Character)
+{
+    nextCharacterToResetPosition = char;
+
+    if (scriptsManager.callback(ON, 'CharacterPositionReset', null, [nextCharacterToResetPosition]))
+    {
+        nextCharacterToResetPosition.x = nextCharacterToResetPosition._castConfig.properties.x;
+        nextCharacterToResetPosition.y = nextCharacterToResetPosition._castConfig.properties.y;
+
+        if (stage.config.charactersOffset != null)
+        {
+            var offset:Point = null;
+
+            if (stage.config.charactersOffset.type != null)
+                offset = Reflect.getProperty(stage.config.charactersOffset.type, cast char.type);
+
+            if (stage.config.charactersOffset.id != null)
+                offset = Reflect.getProperty(stage.config.charactersOffset.id, char.id);
+
+            if (offset != null)
+            {
+                nextCharacterToResetPosition.x += offset.x ?? 0;
+                nextCharacterToResetPosition.y += offset.y ?? 0;
+            }
+        }
+    }
+
+    scriptsManager.callback(POST, 'CharacterPositionReset', null, [nextCharacterToResetPosition]);
+}

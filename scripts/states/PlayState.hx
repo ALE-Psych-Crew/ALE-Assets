@@ -41,6 +41,7 @@ function postUpdate(elapsed:Float)
 }
 
 ClientPrefs.data.downScroll = false;
+ClientPrefs.data.botplay = true;
 
 // Real Shit
 
@@ -68,7 +69,7 @@ function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:Strin
 
     chart = Formatter.getChart(song, difficulty);
 
-    stage = new Stage(super, Formatter.getStage(chart.stage));
+    stage = new Stage(Formatter.getStage(chart.stage));
 }
 
 public var hud:ALEHud = {
@@ -119,6 +120,8 @@ function create()
 
     if (scriptsManager.callback(ON, 'Create'))
     {
+        initCharacters();
+
         initStrumLines();
 
         initControls();
@@ -150,15 +153,21 @@ function destroy()
         FlxG.stage.removeEventListener('keyDown', justPressedKey);
         FlxG.stage.removeEventListener('keyUp', justReleasedKey);
 
-        playerStrumLines.destroy();
-        opponentStrumLines.destroy();
-        extraStrumLines.destroy();
+        characters?.destroy();
 
-        strums.destroy();
+        playerCharacters?.destroy();
+        opponentCharacters?.destroy();
+        extraCharacters?.destroy();
 
-        playerStrums.destroy();
-        opponentStrums.destroy();
-        extraStrums.destroy();
+        playerStrumLines?.destroy();
+        opponentStrumLines?.destroy();
+        extraStrumLines?.destroy();
+
+        strums?.destroy();
+
+        playerStrums?.destroy();
+        opponentStrums?.destroy();
+        extraStrums?.destroy();
     }
 
     scriptsManager.callback(POST, 'Destroy');

@@ -87,44 +87,48 @@ function addStrumLine(strl:StrumLine)
 {
     nextStrumLineToAdd = strl;
 
-    if (scriptsManager.callback(ON, 'StrumLineAdd', null, [strl]))
+    if (scriptsManager.callback(ON, 'StrumLineAdd', null, [nextStrumLineToAdd]))
     {
-        switch (strl.type)
+        switch (nextStrumLineToAdd.type)
         {
             case PLAYER:
-                playerStrumLines.add(strl);
+                playerStrumLines.add(nextStrumLineToAdd);
 
             case OPPONENT:
-                opponentStrumLines.add(strl);
+                opponentStrumLines.add(nextStrumLineToAdd);
 
             case EXTRA:
-                extraStrumLines.add(strl);
+                extraStrumLines.add(nextStrumLineToAdd);
         }
 
-        strumLines.add(strl);
+        strumLines.add(nextStrumLineToAdd);
     }
 
-    scriptsManager.callback(POST, 'StrumLineAdd', null, [strl]);
+    scriptsManager.callback(POST, 'StrumLineAdd', null, [nextStrumLineToAdd]);
 }
 
-function addStrum(strum:StrumLine)
+var nextStrumToAdd:Strum;
+
+function addStrum(strum:Strum)
 {
-    if (scriptsManager.callback(ON, 'StrumAdd'))
+    nextStrumToAdd = strum;
+
+    if (scriptsManager.callback(ON, 'StrumAdd', null, [nextStrumToAdd]))
     {
-        switch (strum.strumLine.type)
+        switch (nextStrumToAdd.strumLine.type)
         {
             case PLAYER:
-                playerStrums.add(strum);
+                playerStrums.add(nextStrumToAdd);
 
             case OPPONENT:
-                opponentStrums.add(strum);
+                opponentStrums.add(nextStrumToAdd);
 
             case EXTRA:
-                extraStrums.add(strum);
+                extraStrums.add(nextStrumToAdd);
         }
 
-        strums.add(strum);
+        strums.add(nextStrumToAdd);
     }
 
-    scriptsManager.callback(POST, 'StrumAdd');
+    scriptsManager.callback(POST, 'StrumAdd', null, [nextStrumToAdd]);
 }
