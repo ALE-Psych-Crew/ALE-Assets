@@ -2,12 +2,32 @@ package;
 
 public var strumLines:FlxTypedGroup<StrumLine>;
 
+public var playerStrumLines:FlxTypedGroup<StrumLine>;
+public var opponentStrumLines:FlxTypedGroup<StrumLine>;
+public var extraStrumLines:FlxTypedGroup<StrumLine>;
+
+public var strums:FlxTypedGroup<Strum>;
+
+public var playerStrums:FlxTypedGroup<StrumLine>;
+public var opponentStrums:FlxTypedGroup<StrumLine>;
+public var extraStrums:FlxTypedGroup<StrumLine>;
+
 public function initStrumLines()
 {
     if (scriptsManager.callback(ON, 'StrumLinesInit'))
     {
         add(strumLines = new FlxTypedGroup<StrumLine>());
         strumLines.camera = camHUD;
+        
+        playerStrumLines = new FlxTypedGroup<StrumLine>();
+        opponentStrumLines = new FlxTypedGroup<StrumLine>();
+        extraStrumLines = new FlxTypedGroup<StrumLine>();
+
+        strums = new FlxTypedGroup<Strum>();
+        
+        playerStrums = new FlxTypedGroup<Strum>();
+        opponentStrums = new FlxTypedGroup<Strum>();
+        extraStrums = new FlxTypedGroup<Strum>();
 
         final notes = [];
 
@@ -18,9 +38,11 @@ public function initStrumLines()
 
             for (note in section.notes)
             {
-                notes[4] ??= [];
+                notes[note[4]] ??= [];
 
-                notes[4].push([
+                continue;
+
+                notes[note[4]].push([
                     note[0],
                     note[1],
                     note[2],
@@ -37,9 +59,72 @@ public function initStrumLines()
         {
             final strumLine:StrumLine = new StrumLine(strl.file, strl.type, index, notes[index]);
             strumLine.visible = strl.visible;
-            strumLines.add(strumLine);
+            addStrumLine(strumLine);
+
+            var strumsOffsetX:Float = 0;
+            var strumsOffsetY:Float = 0;
+
+            for (strumIndex => strum in strumLine.strums.members)
+            {
+                strumsOffsetX += strumIndex >= strumLine.strums.length - 1 ? strum.width : strumLine.config.spacing;
+
+                strumsOffsetY = Math.max(strumsOffsetY, strum.height);
+                
+                addStrum(strum);
+            }
+
+            strumLine.x = strumLine.type == PLAYER ? FlxG.width - strl.position.x - strumsOffsetX : strl.position.x;
+            strumLine.y = strumLine.downScroll ? FlxG.height - strl.position.y - strumsOffsetY : strl.position.y;
         }
     }
 
     scriptsManager.callback(POST, 'StrumLinesInit');
+}
+
+var nextStrumLineToAdd:StrumLine;
+
+function addStrumLine(strl:StrumLine)
+{
+    nextStrumLineToAdd = strl;
+
+    if (scriptsManager.callback(ON, 'StrumLineAdd', null, [strl]))
+    {
+        switch (strl.type)
+        {
+            case PLAYER:
+                playerStrumLines.add(strl);
+
+            case OPPONENT:
+                opponentStrumLines.add(strl);
+
+            case EXTRA:
+                extraStrumLines.add(strl);
+        }
+
+        strumLines.add(strl);
+    }
+
+    scriptsManager.callback(POST, 'StrumLineAdd', null, [strl]);
+}
+
+function addStrum(strum:StrumLine)
+{
+    if (scriptsManager.callback(ON, 'StrumAdd'))
+    {
+        switch (strum.strumLine.type)
+        {
+            case PLAYER:
+                playerStrums.add(strum);
+
+            case OPPONENT:
+                opponentStrums.add(strum);
+
+            case EXTRA:
+                extraStrums.add(strum);
+        }
+
+        strums.add(strum);
+    }
+
+    scriptsManager.callback(POST, 'StrumAdd');
 }

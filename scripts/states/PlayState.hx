@@ -1,22 +1,46 @@
 import utils.Formatter;
 
-public final scriptsManager = {
-    callback: (_, __) -> true
+static final scriptsManager = {
+    callback:
+        function (type, id, ?global, ?haxe, ?lua)
+        {
+            // debugTrace([Std.string(type) + id, 'Global: ' + global, 'Haxe: ' + haxe, 'Lua: ' + lua].join(' -> '));
+
+            return true;
+        }
 };
 
-public final superDuper = {
-    create: () -> {}
+static final superDuper = {
+    create: () -> {},
+    destroy: () -> {},
+    update: (e) -> {},
 };
 
-public final ON:String = 'on';
-public final POST:String = 'post';
+static final ON:String = 'on';
+static final POST:String = 'post';
 
-public final FREEPLAY:String = 'freeplay';
+static final FREEPLAY:String = 'freeplay';
+
+static final PLAYER:String = 'player';
+static final OPPONENT:String = 'opponent';
+static final EXTRA:String = 'extra';
 
 function postCreate()
 {
     create();
 }
+
+function postDestroy()
+{
+    destroy();
+}
+
+function postUpdate(elapsed:Float)
+{
+    update(elapsed);
+}
+
+ClientPrefs.data.downScroll = false;
 
 // Real Shit
 
@@ -97,6 +121,45 @@ function create()
     {
         initStrumLines();
 
+        initControls();
+
         startSong();
     }
+
+    scriptsManager.callback(POST, 'Create');
+}
+
+function update(elapsed:Float)
+{
+    superDuper.update(elapsed);
+
+    if (scriptsManager.callback(ON, 'Update', [elapsed]))
+    {
+
+    }
+
+    scriptsManager.callback(POST, 'Update', [elapsed]);
+}
+
+function destroy()
+{
+    superDuper.destroy();
+
+    if (scriptsManager.callback(ON, 'Destroy'))
+    {
+        FlxG.stage.removeEventListener('keyDown', justPressedKey);
+        FlxG.stage.removeEventListener('keyUp', justReleasedKey);
+
+        playerStrumLines.destroy();
+        opponentStrumLines.destroy();
+        extraStrumLines.destroy();
+
+        strums.destroy();
+
+        playerStrums.destroy();
+        opponentStrums.destroy();
+        extraStrums.destroy();
+    }
+
+    scriptsManager.callback(POST, 'Destroy');
 }
