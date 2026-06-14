@@ -8,6 +8,24 @@ public var playerCharacters:FlxTypedGroup<Character>;
 public var opponentCharacters:FlxTypedGroup<Character>;
 public var extraCharacters:FlxTypedGroup<Character>;
 
+// FIX
+
+public function get_bf():Character
+    return playerCharacters.members[0];
+public var bf:Character;
+
+// FIX
+
+public function get_dad():Character
+    return opponentCharacters.members[0];
+public var dad:Character;
+
+// FIX
+
+public function get_gf():Character
+    return extraCharacters.members[0];
+public var gf:Character;
+
 public function initCharacters()
 {
     if (scriptsManager.callback(ON, 'CharactersInit'))

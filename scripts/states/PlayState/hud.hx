@@ -16,7 +16,9 @@ public function initHud()
         add(uiGroup = new FlxGroup());
         uiGroup.camera = camHUD;
 
-        healthBar = new Bar(hudRoute + '/' + hud.bar, hudRoute + '/' + hud.barFill, health);
+        // FIX
+
+        healthBar = new Bar(get_hudRoute() + '/' + hud.bar, get_hudRoute() + '/' + hud.barFill, health);
         healthBar.x = FlxG.width / 2 - healthBar.width / 2;
         healthBar.y = FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9);
         uiGroup.add(healthBar);

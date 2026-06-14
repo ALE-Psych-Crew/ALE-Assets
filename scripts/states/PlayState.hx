@@ -54,8 +54,10 @@ public var spawnNotes:Bool = false;
 public var chart:ALESong;
 public var hud:ALEHud;
 
-function get_hudRoute():String
-    return hud == null ? null : 'hud/' + hud.directory;
+// FIX
+
+public function get_hudRoute():String
+    return 'huds/' + hud.directory;
 public var hudRoute:String;
 
 public final song:String;
@@ -117,8 +119,6 @@ function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:Strin
     stage = new Stage(Formatter.getStage(chart.stage));
 
     hud = Paths.json('data/huds/' + stage.config.hud);
-
-    hudRoute = 'huds/' + hud.directory;
 }
 
 function create()
@@ -130,6 +130,8 @@ function create()
         initCharacters();
         
         initHud();
+
+        initIcons();
 
         initStrumLines();
 
@@ -181,6 +183,10 @@ function destroy()
         playerCharacters?.destroy();
         opponentCharacters?.destroy();
         extraCharacters?.destroy();
+
+        playerIcons?.destroy();
+        opponentIcons?.destroy();
+        extraIcons?.destroy();
 
         playerStrumLines?.destroy();
         opponentStrumLines?.destroy();
