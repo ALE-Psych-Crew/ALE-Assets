@@ -6,7 +6,7 @@ class Character extends scripting.haxe.ScriptedBopper
 {
     public var type:CharacterType;
 
-    public final id:String;
+    public var id:String;
 
     public var _castConfig(get, never):JsonCharacter;
     function get__castConfig():JsonCharacter
@@ -19,6 +19,13 @@ class Character extends scripting.haxe.ScriptedBopper
         pathPrefix = 'characters/';
 
         super();
+
+        change(id, type);
+    }
+
+    public function change(id:String, ?type:CharacterType)
+    {
+        restart();
 
         if (type != null)
             this.type = type;
@@ -129,5 +136,12 @@ class Character extends scripting.haxe.ScriptedBopper
         for (vocal in vocals)
             if (vocal != null)
                 vocal.volume = missVolume;
+    }
+
+    override public function restart()
+    {
+        super.restart();
+
+        resetBlockers();
     }
 }

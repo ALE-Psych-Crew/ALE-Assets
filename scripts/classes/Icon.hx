@@ -8,7 +8,7 @@ class Icon extends scripting.haxe.ScriptedBopper
 {
     public var type:CharacterType;
 
-    public final id:String;
+    public var id:String;
 
     public var _castConfig(get, never):JsonIcon;
     function get__castConfig():JsonIcon
@@ -16,19 +16,27 @@ class Icon extends scripting.haxe.ScriptedBopper
         return cast config;
     }
 
-    public function new(name:String, newType:CharacterType)
+    public function new(id:String, type:CharacterType)
     {
         pathPrefix = 'icons/';
 
         super();
 
-        fromJson(Formatter.getIcon(name));
+        change(id, type);
+    }
+
+    public function change(id:String, ?type:CharacterType)
+    {
+        restart();
+
+        if (type != null)
+            this.type = type;
+
+        fromJson(Formatter.getIcon(id));
 
         _castConfig.healthAnimations.sort((a, b) -> Math.floor(a.percent - b.percent));
 
-        this.id = name;
-
-        this.type = newType;
+        this.id = id;
 
         beatHit = curBeat -> {
             if (_castConfig.bopModulo > 0 && curBeat % _castConfig.bopModulo == 0)
@@ -110,5 +118,12 @@ class Icon extends scripting.haxe.ScriptedBopper
 
         if (checkAnimation != null)
             checkAnimation(elapsed);
+    }
+
+    override public function restart()
+    {
+        super.restart();
+
+        animationIndex = -1;
     }
 }
