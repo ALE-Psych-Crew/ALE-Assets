@@ -40,6 +40,9 @@ public function initStrumLines()
 
                 for (note in section.notes)
                 {
+                    if (note[0] <= startTime)
+                        continue;
+
                     notes[note[4]] ??= [];
 
                     notes[note[4]].push([
@@ -63,7 +66,8 @@ public function initStrumLines()
             strumLine.noteHitCallback = hitNote;
             strumLine.noteMissCallback = missNote;
             strumLine.visible = strl.visible;
-            
+            strumLine.missWindow = hud.ratings[hud.ratings.length - 1].time;
+
             addStrumLine(strumLine);
 
             var strumsOffsetX:Float = 0;
@@ -119,15 +123,37 @@ public function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
 {
     nextNoteToHit = note;
     nextNoteToHitCharacter = characterFromNote(nextNoteToHit);
+    
+    final rating:JsonHudRating = note.type == ARROW ? judgeNote(timeDistance) : null;
 
-    final result:Bool = scriptsManager.callback(ON, 'NoteHit', null, [nextNoteToHit, nextNoteToHitCharacter, timeDistance, removeNote], [timeDistance, removeNote]);
+    final result:Bool = scriptsManager.callback(ON, 'NoteHit', null, [nextNoteToHit, nextNoteToHitCharacter, rating, timeDistance, removeNote], [rating, timeDistance, removeNote]);
 
     if (result)
     {
         nextNoteToHitCharacter?.sing(note.type != ARROW && !nextNoteToHitCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.sing);
+
+        if (rating != null)
+        {
+            if (rating.splash && !note.strumLine.botplay)
+                note.splash?.splash();
+        }
     }
 
     scriptsManager.callback(POST, 'NoteHit', null, [nextNoteToHit, nextNoteToHitCharacter, timeDistance, removeNote], [timeDistance, removeNote]);
+
+    return result;
+}
+
+function judgeNote(time:Float)
+{
+    time = Math.abs(time);
+
+    final result = hud.ratings[0];
+
+    var index:Int = 0;
+
+    while (time > result.time && index < hud.ratings.length)
+        result = hud.ratings[index++];
 
     return result;
 }

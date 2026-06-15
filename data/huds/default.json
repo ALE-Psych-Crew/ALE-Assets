@@ -1,8 +1,37 @@
 {
     "format": "ale-hud-v0.1",
     "directory": "default",
+    "ratings": [
+        {
+            "id": "sick",
+            "score": 350,
+            "accuracy": 100,
+            "time": 45,
+            "splash": true
+        },
+        {
+            "id": "good",
+            "score": 200,
+            "accuracy": 66,
+            "time": 90,
+            "splash": false
+        },
+        {
+            "id": "bad",
+            "score": 100,
+            "accuracy": 33,
+            "time": 135,
+            "splash": false
+        },
+        {
+            "id": "shit",
+            "score": 50,
+            "accuracy": 0,
+            "time": 180,
+            "splash": false
+        }
+    ],
+    "textFont": "vcr.ttf",
     "bar": "bar",
-    "barFill": "barFilling",
-    "textSpacing": "    ",
-    "textFont": "vcr.ttf"
+    "barFilling": "barFilling"
 }

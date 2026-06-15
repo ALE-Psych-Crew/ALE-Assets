@@ -18,7 +18,7 @@ public function initHud()
 
         // FIX
 
-        healthBar = new Bar(get_hudRoute() + '/' + hud.bar, get_hudRoute() + '/' + hud.barFill, health);
+        healthBar = new Bar(get_hudRoute() + '/' + hud.bar, get_hudRoute() + '/' + hud.barFilling, health);
         healthBar.x = FlxG.width / 2 - healthBar.width / 2;
         healthBar.y = FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9);
         healthBar.fillingBack.color = CoolUtil.colorFromString((get_dad() ?? get_gf() ?? get_bf()).config.barColor);
@@ -39,7 +39,7 @@ public function initHud()
 public function updateScoreText()
 {
     if (scriptsManager.callback(ON, 'ScoreTextUpdate'))
-        scoreText.text = 'Score: ' + score + hud.textSpacing + 'Misses: ' + misses + hud.textSpacing + 'Accuracy: ' + accuracy + '%';
+        scoreText.text = 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + accuracy + '%';
 
     scriptsManager.callback(POST, 'ScoreTextUpdate');
 }

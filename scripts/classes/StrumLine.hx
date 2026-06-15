@@ -34,7 +34,7 @@ class StrumLine extends scripting.haxe.ScriptedFlxSpriteGroup
 
         this.type = type;
 
-        botplay = type == 'opponent';
+        botplay = type == 'opponent' || ClientPrefs.data.botplay;
 
         config = Formatter.getStrumLine(id);
 

@@ -31,27 +31,3 @@ public function moveCamera(?char:OneOfTwo<Character, Int>, ?force:Bool = false)
 
     scriptsManager.callback(POST, 'CameraMove', null, [cameraTarget]);
 }
-
-function getCharacterCamera(character:Character):Point
-{
-    final result:Point = {x: character.getMidpoint().x + character._castConfig.cameraOffset.x * (character.type == 'player' ? -1 : 1), y: character.getMidpoint().y + character._castConfig.cameraOffset.y};
-
-    if (stage.config.charactersCamera != null)
-    {
-        var offset:Point = null;
-
-        if (stage.config.charactersCamera.type != null)
-            offset = Reflect.getProperty(stage.config.charactersCamera.type, cast character.type);
-
-        if (stage.config.charactersCamera.id != null)
-            offset = Reflect.getProperty(stage.config.charactersCamera.id, character.id);
-
-        if (offset != null)
-        {
-            result.x += offset.x ?? 0;
-            result.y += offset.y ?? 0;
-        }
-    }
-
-    return result;
-}

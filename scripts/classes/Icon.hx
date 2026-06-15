@@ -34,9 +34,39 @@ class Icon extends scripting.haxe.ScriptedBopper
 
         fromJson(Formatter.getIcon(id));
 
-        _castConfig.healthAnimations.sort((a, b) -> Math.floor(a.percent - b.percent));
+        _castConfig.healthAnimations.sort((a, b) -> Reflect.compare(a.percent, b.percent));
 
         this.id = id;
+    }
+
+    public var bar:Bar;
+
+    public var updatePosition:Float -> Void;
+    public var updateScale:Float -> Void;
+
+    public var animationIndex:Int = -1;
+
+    public var checkAnimation:Float -> Void;
+
+    override function update(elapsed:Float)
+    {
+        super.update(elapsed);
+
+        if (updateScale != null)
+            updateScale(elapsed);
+
+        if (updatePosition != null)
+            updatePosition(elapsed);
+
+        if (checkAnimation != null)
+            checkAnimation(elapsed);
+    }
+
+    override public function restart()
+    {
+        super.restart();
+
+        animationIndex = -1;
 
         beatHit = curBeat -> {
             if (_castConfig.bopModulo > 0 && curBeat % _castConfig.bopModulo == 0)
@@ -95,35 +125,5 @@ class Icon extends scripting.haxe.ScriptedBopper
                 update(0);
             }            
         };
-    }
-
-    public var bar:Bar;
-
-    public var updatePosition:Float -> Void;
-    public var updateScale:Float -> Void;
-
-    public var animationIndex:Int = -1;
-
-    public var checkAnimation:Float -> Void;
-
-    override function update(elapsed:Float)
-    {
-        super.update(elapsed);
-
-        if (updateScale != null)
-            updateScale(elapsed);
-
-        if (updatePosition != null)
-            updatePosition(elapsed);
-
-        if (checkAnimation != null)
-            checkAnimation(elapsed);
-    }
-
-    override public function restart()
-    {
-        super.restart();
-
-        animationIndex = -1;
     }
 }

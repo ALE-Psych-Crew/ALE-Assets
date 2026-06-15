@@ -58,13 +58,13 @@ function onCamerasInit()
 }
 
 ClientPrefs.data.downScroll = false;
-ClientPrefs.data.botplay = true;
+ClientPrefs.data.botplay = false;
 
 // Real Shit
 
 public var startTime:Float = 0;
 
-public var spawnNotes:Bool = false;
+public var spawnNotes:Bool = true;
 
 public var chart:ALESong;
 public var hud:ALEHud;
@@ -94,13 +94,21 @@ public var combo:Int = 0;
 public var stage:Stage;
 
 public function get_accuracy():Float
-    return totalNotes == 0 ? 0 : accuracyMod / totalNotes;
+    return totalNotes == 0 ? 100 : accuracyMod / totalNotes;
 public var accuracy(get, never):Float;
 
 public var botplay(default, set):Bool;
 public function set_botplay(value:Bool):Bool
 {
     botplay = value;
+
+    // FIX
+
+    /*
+    if (strumLines != null)
+        for (strl in strumLines)
+            strl.botplay = botplay;
+    */
 
     return botplay;
 }
@@ -112,7 +120,7 @@ public var health:Float = 50;
 function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:String, ?newWeek:String, ?newWeekScore:Float, ?newSongIndex:Int)
 {
     newType ??= FREEPLAY;
-    newPlaylist ??= ['Bopeebo'];
+    newPlaylist ??= ['fresh'];
     newDifficulty ??= 'normal';
     newWeekScore ??= 0;
     newSongIndex ??= 0;
@@ -134,6 +142,8 @@ function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:Strin
     stage = new Stage(Formatter.getStage(chart.stage));
 
     hud = Paths.json('data/huds/' + stage.config.hud);
+
+    hud.ratings.sort((a, b) -> Reflect.compare(a.time, b.time));
 }
 
 function create()
@@ -148,9 +158,15 @@ function create()
 
         initIcons();
 
+        startTime = Conductor.music == null ? 0 : Conductor.music.length * 0.94;
+
+        botplay = ClientPrefs.data.botplay;
+
         initStrumLines();
 
         initControls();
+
+        stage.change(chart.stage);
 
         initSounds();
 
@@ -188,14 +204,19 @@ function update(elapsed:Float)
     scriptsManager.callback(POST, 'Update', [elapsed]);
 }
 
-function pause()
+var allowPausing:Bool = true;
+
+function pause(?force:Bool = false)
 {
     if (scriptsManager.callback(ON, 'Pause'))
     {
-        FlxTimer.globalManager.forEach(tmr -> if (tmr != null && !tmr.finished) tmr.active = false);
-        FlxTween.globalManager.forEach(twn ->  if (twn != null && !twn.finished) twn.active = false);
+        if (allowPausing || force)
+        {
+            FlxTimer.globalManager.forEach(tmr -> if (tmr != null && !tmr.finished) tmr.active = false);
+            FlxTween.globalManager.forEach(twn ->  if (twn != null && !twn.finished) twn.active = false);
 
-        CoolUtil.openSubState(new CustomSubState(CoolVars.meta.pauseSubState));
+            CoolUtil.openSubState(new CustomSubState(CoolVars.meta.pauseSubState));
+        }
     }
 
     scriptsManager.callback(POST, 'Pause');
