@@ -34,7 +34,7 @@ public function initIcons()
         opponentIcons = new FlxTypedGroup<Icon>();
         extraIcons = new FlxTypedGroup<Icon>();
 
-        for (char in [get_dad(), get_bf()])
+        for (char in [get_dad() ?? get_gf() ?? get_bf(), get_bf() ?? get_gf() ?? get_dad()])
         {
             final icon:Icon = new Icon(char.config.icon, char.type);
             addIcon(icon);

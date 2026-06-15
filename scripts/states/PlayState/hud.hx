@@ -21,6 +21,8 @@ public function initHud()
         healthBar = new Bar(get_hudRoute() + '/' + hud.bar, get_hudRoute() + '/' + hud.barFill, health);
         healthBar.x = FlxG.width / 2 - healthBar.width / 2;
         healthBar.y = FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9);
+        healthBar.fillingBack.color = CoolUtil.colorFromString((get_dad() ?? get_gf() ?? get_bf()).config.barColor);
+        healthBar.fillingFront.color = CoolUtil.colorFromString((get_bf() ?? get_gf() ?? get_dad()).config.barColor);
         uiGroup.add(healthBar);
 
         scoreText = new FlxText(0, healthBar.y + 40, FlxG.width, '');
