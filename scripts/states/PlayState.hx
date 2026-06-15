@@ -180,9 +180,36 @@ function update(elapsed:Float)
 
             updateHealth();
         }
+
+        if (Controls.PAUSE)
+            pause();
     }
 
     scriptsManager.callback(POST, 'Update', [elapsed]);
+}
+
+function pause()
+{
+    if (scriptsManager.callback(ON, 'Pause'))
+    {
+        FlxTimer.globalManager.forEach(tmr -> if (tmr != null && !tmr.finished) tmr.active = false);
+        FlxTween.globalManager.forEach(twn ->  if (twn != null && !twn.finished) twn.active = false);
+
+        CoolUtil.openSubState(new CustomSubState(CoolVars.meta.pauseSubState));
+    }
+
+    scriptsManager.callback(POST, 'Pause');
+}
+
+function resume()
+{
+    if (scriptsManager.callback(ON, 'Resume'))
+    {
+        FlxTimer.globalManager.forEach(tmr -> if (tmr != null && !tmr.finished) tmr.active = true);
+        FlxTween.globalManager.forEach(twn ->  if (twn != null && !twn.finished) twn.active = true);
+    }
+
+    scriptsManager.callback(POST, 'Resume');
 }
 
 function initCameras()

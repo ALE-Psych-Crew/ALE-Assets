@@ -4,7 +4,26 @@ import flixel.effects.FlxFlicker;
 
 using StringTools;
 
-var config:JsonMenu = Paths.json('data/menus/main');
+@:typedef JsonMain = {
+    var directory:String;
+
+    var cameraSpread:Float;
+
+    var text:String;
+    var textCorner:String;
+    var textMargin:Point;
+    
+    var bg:JsonSprite;
+
+    var options:Array<JsonSprite>;
+    var optionsOffset:Point;
+    var optionsSpacing:Float;
+    var optionsAlignment:String;
+    var optionsSelectedAnimation:String;
+    var optionsIdleAnimation:String;
+};
+
+var config:JsonMain = Paths.json('data/menus/main');
 
 var bg:FlxSprite;
 
