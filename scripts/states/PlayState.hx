@@ -1,3 +1,5 @@
+import funkin.visuals.FXCamera;
+
 import utils.Formatter;
 
 static final scriptsManager = {
@@ -14,6 +16,7 @@ static final superDuper = {
     create: () -> {},
     destroy: () -> {},
     update: (e) -> {},
+    sectionHit: (curSection) -> {},
 };
 
 static final ON:String = 'on';
@@ -40,6 +43,18 @@ function postDestroy()
 function postUpdate(elapsed:Float)
 {
     update(elapsed);
+}
+
+function onSectionHit(curSection:Int)
+{
+    sectionHit(curSection);
+}
+
+function onCamerasInit()
+{
+    initCameras();
+
+    return Function_Stop;
 }
 
 ClientPrefs.data.downScroll = false;
@@ -140,6 +155,10 @@ function create()
         initSounds();
 
         startSong();
+
+        moveCamera(0);
+
+        camGame.snapToTarget();
     }
 
     scriptsManager.callback(POST, 'Create');
@@ -164,6 +183,40 @@ function update(elapsed:Float)
     }
 
     scriptsManager.callback(POST, 'Update', [elapsed]);
+}
+
+function initCameras()
+{
+    if (scriptsManager.callback(ON, 'CamerasInit'))
+    {
+		game.camGame = new FXCamera();
+
+        final camGame:FXCamera = cast camGame;
+		
+        camGame.speed = 1;
+        camGame.zoomSpeed = 1;
+        camGame.bopModulo = 4;
+        camGame.zoom = camGame.targetZoom = stage.config.zoom;
+
+		FlxG.cameras.reset(camGame);
+		FlxG.cameras.setDefaultDrawTarget(camGame, true);
+        
+		game.camHUD = new FXCamera();
+
+		FlxG.cameras.add(camHUD, false);
+    }
+
+    scriptsManager.callback(POST, 'CamerasInit');
+}
+
+function sectionHit(curSection:Int)
+{
+    if (scriptsManager.callback(ON, 'SectionHit', [curSection]))
+    {
+        moveCamera(curSection);
+    }
+
+    scriptsManager.callback(POST, 'SectionHit', [curSection]);
 }
 
 function destroy()
