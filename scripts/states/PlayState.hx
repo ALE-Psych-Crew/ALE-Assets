@@ -57,6 +57,8 @@ function onCamerasInit()
     return Function_Stop;
 }
 
+public var CONTEXT_VARIABLES = Reflect.getProperty(this, 'context').publicVariables;
+
 ClientPrefs.data.downScroll = false;
 ClientPrefs.data.botplay = false;
 
@@ -93,9 +95,18 @@ public var combo:Int = 0;
 
 public var stage:Stage;
 
+// FIX
+
+public var accuracy:Float;
 public function get_accuracy():Float
-    return totalNotes == 0 ? 100 : accuracyMod / totalNotes;
-public var accuracy(get, never):Float;
+{
+    final totalNotes = CONTEXT_VARIABLES.get('totalNotes');
+    final accuracyMod = CONTEXT_VARIABLES.get('accuracyMod');
+
+    accuracy = totalNotes == 0 ? 100 : accuracyMod / totalNotes;
+
+    return accuracy;
+}
 
 public var botplay(default, set):Bool;
 public function set_botplay(value:Bool):Bool
@@ -188,6 +199,8 @@ function update(elapsed:Float)
 
     if (scriptsManager.callback(ON, 'Update', [elapsed]))
     {
+        final health = CONTEXT_VARIABLES.get('health');
+        
         health = FlxMath.bound(health, 0, 100);
 
         if (_lastHealth != health)

@@ -132,10 +132,22 @@ public function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
     {
         nextNoteToHitCharacter?.sing(note.type != ARROW && !nextNoteToHitCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.sing);
 
-        if (rating != null)
+        if (rating != null && note.strumLine.type == PLAYER)
         {
             if (rating.splash && !note.strumLine.botplay)
                 note.splash?.splash();
+
+            score += rating.score;
+
+            accuracyMod += rating.accuracy;
+
+            totalNotes++;
+
+            // FIX
+
+            updateScoreText();
+
+            health += note.singHealth;
         }
     }
 
@@ -171,6 +183,20 @@ public function missNote(note:Note):Bool
     if (result)
     {
         nextNoteToMissCharacter?.miss(note.type != ARROW && !nextNoteToMissCharacter._castConfig.sustainAnimation ? null : note.strumLineConfig.miss);
+
+        if (nextNoteToMissCharacter.type == PLAYER)
+        {
+            if (note.type == ARROW)
+            {
+                combo = 0;
+
+                misses++;
+
+                totalNotes++;
+            }
+
+            health -= note.missHealth;
+        }
     }
 
     scriptsManager.callback(POST, 'NoteMiss', null, [nextNoteToMiss, nextNoteToMissCharacter]);

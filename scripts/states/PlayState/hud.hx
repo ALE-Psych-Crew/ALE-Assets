@@ -39,7 +39,7 @@ public function initHud()
 public function updateScoreText()
 {
     if (scriptsManager.callback(ON, 'ScoreTextUpdate'))
-        scoreText.text = 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + accuracy + '%';
+        scoreText.text = 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + CoolUtil.floorDecimal(get_accuracy(), 2) + '%';
 
     scriptsManager.callback(POST, 'ScoreTextUpdate');
 }
