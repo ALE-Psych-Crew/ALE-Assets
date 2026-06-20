@@ -171,7 +171,7 @@ function create()
 
         initIcons();
 
-        startTime = Conductor.music == null ? 0 : Conductor.music.length * 0;
+        startTime = Conductor.music == null ? 0 : Conductor.music.length * 0.945;
 
         botplay = ClientPrefs.data.botplay;
 

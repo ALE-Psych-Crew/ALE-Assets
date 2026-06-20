@@ -38,7 +38,7 @@
         },
         "rating": {
             "ease": "circInOut",
-            "duration": 0.5,
+            "duration": 0.75,
             "start": {
                 "x": 0,
                 "y": 0,
@@ -59,7 +59,7 @@
         "number": {
             "spacing": 35,
             "ease": "circInOut",
-            "duration": 0.5,
+            "duration": 0.75,
             "start": {
                 "x": 50,
                 "y": 60,
