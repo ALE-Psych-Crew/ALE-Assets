@@ -59,7 +59,7 @@ function onCamerasInit()
 
 public var CONTEXT_VARIABLES = Reflect.getProperty(this, 'context').publicVariables;
 
-ClientPrefs.data.downScroll = false;
+ClientPrefs.data.downScroll = true;
 ClientPrefs.data.botplay = false;
 
 // Real Shit
@@ -164,12 +164,14 @@ function create()
     if (scriptsManager.callback(ON, 'Create'))
     {
         initCharacters();
+
+        initCombo();
         
         initHud();
 
         initIcons();
 
-        startTime = Conductor.music == null ? 0 : Conductor.music.length * 0.94;
+        startTime = Conductor.music == null ? 0 : Conductor.music.length * 0;
 
         botplay = ClientPrefs.data.botplay;
 
@@ -199,7 +201,7 @@ function update(elapsed:Float)
 
     if (scriptsManager.callback(ON, 'Update', [elapsed]))
     {
-        final health = CONTEXT_VARIABLES.get('health');
+        var health = CONTEXT_VARIABLES.get('health');
         
         health = FlxMath.bound(health, 0, 100);
 

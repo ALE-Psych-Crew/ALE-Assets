@@ -143,11 +143,13 @@ public function hitNote(note:Note, timeDistance:Float, removeNote:Bool):Bool
 
             totalNotes++;
 
-            // FIX
+            health += note.singHealth;
+
+            combo++;
 
             updateScoreText();
 
-            health += note.singHealth;
+            displayCombo(rating);
         }
     }
 
@@ -186,6 +188,10 @@ public function missNote(note:Note):Bool
 
         if (nextNoteToMissCharacter.type == PLAYER)
         {
+            health -= note.missHealth;
+
+            combo = 0;
+            
             if (note.type == ARROW)
             {
                 combo = 0;
@@ -193,9 +199,9 @@ public function missNote(note:Note):Bool
                 misses++;
 
                 totalNotes++;
-            }
 
-            health -= note.missHealth;
+                updateScoreText();
+            }
         }
     }
 
