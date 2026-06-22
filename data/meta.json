@@ -1,5 +1,5 @@
 {
-    "titleState": "PlayState",
+    // "titleState": "PlayState",
     "bpm": 102,
     "developerMode": true,
     "verbose": false

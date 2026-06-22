@@ -1,4 +1,5 @@
 import funkin.visuals.objects.Alphabet;
+import funkin.visuals.game.Icon;
 
 import utils.Formatter;
 
@@ -79,11 +80,23 @@ function onCreate()
 
     for (index => song in songs)
     {
-        var group:FlxTypedSpriteGroup<FlxSprite> = new FlxTypedSpriteGroup<FlxSprite>(index * config.songsSpacing.x, index * config.songsSpacing.y);
+        final group:FlxTypedSpriteGroup<FlxSprite> = new FlxTypedSpriteGroup<FlxSprite>(index * config.songsSpacing.x, index * config.songsSpacing.y);
         sprites.add(group);
 
         final text:Alphabet = new Alphabet(0, 0, song.name);
         group.add(text);
+
+        final icon:Icon = new Icon(song.icon, 'opponent');
+        icon.x = group.x + text.width + 10;
+        icon.y = group.y + text.height / 2 - icon.height / 2;
+
+        final beatHit:Int -> Void = icon.beatHit;
+        
+        icon.beatHit = null;
+        
+        add(icon);
+
+        group.metadata.set('setBeatHit', (able) -> icon.beatHit = able ? beatHit : null );
     }
 
     if (config.changeBGColor)
@@ -120,6 +133,11 @@ function changeOption(?change:Int = 0)
     for (index => obj in sprites.members)
     {
         obj.alpha = index == selInt ? 1 : 0.5;
+
+        final beatHit = obj.metadata.get('setBeatHit');
+        
+        if (beatHit != null)
+            beatHit(index == selInt);
 
         if (index == selInt && config.changeBGColor)
         {
@@ -220,6 +238,20 @@ function onUpdate(elapsed:Float)
             CoolUtil.switchState(new CustomState(CoolVars.meta.mainMenuState));
 
             CoolUtil.playSound('cancel');
+        }
+
+        if (Controls.ACCEPT)
+        {
+            try
+            {
+                final curSong = songs[selInt];
+
+                CoolUtil.switchState(new PlayState('freeplay', [curSong.name], curSong.difficulties[diffSelInt]));
+
+                canSelect = false;
+            } catch(e:Exception) {
+                debugTrace(e, 'error');
+            }
         }
     }
 }
