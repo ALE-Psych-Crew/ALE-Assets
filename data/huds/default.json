@@ -37,7 +37,7 @@
             "y": 575
         },
         "rating": {
-            "ease": "circOut",
+            "ease": "circInOut",
             "duration": 0.75,
             "start": {
                 "x": 0,

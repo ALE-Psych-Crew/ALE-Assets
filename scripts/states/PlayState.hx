@@ -60,13 +60,13 @@ function onCamerasInit()
 public var CONTEXT_VARIABLES = Reflect.getProperty(this, 'context').publicVariables;
 
 ClientPrefs.data.downScroll = false;
-ClientPrefs.data.botplay = false;
+ClientPrefs.data.botplay = true;
 
 // Real Shit
 
 public var startTime:Float = 0;
 
-public var spawnNotes:Bool = false;
+public var spawnNotes:Bool = true;
 public var skipCountdown:Bool = false;
 
 public var chart:ALESong;
@@ -130,7 +130,7 @@ public var health:Float = 50;
 function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:String, ?newWeek:String, ?newWeekScore:Float, ?newSongIndex:Int)
 {
     newType ??= FREEPLAY;
-    newPlaylist ??= ['fresh'];
+    newPlaylist ??= ['bopeebo'];
     newDifficulty ??= 'normal';
     newWeekScore ??= 0;
     newSongIndex ??= 0;
@@ -171,8 +171,6 @@ function create()
         initIcons();
 
         // FIX
-
-        skipCountdown = true;
 
         botplay = ClientPrefs.data.botplay;
 
