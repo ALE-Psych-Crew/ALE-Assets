@@ -37,7 +37,7 @@
             "y": 575
         },
         "rating": {
-            "ease": "circInOut",
+            "ease": "circOut",
             "duration": 0.75,
             "start": {
                 "x": 0,
@@ -75,6 +75,35 @@
                     "x": 0.4,
                     "y": 0.4
                 }
+            }
+        }
+    },
+    "countdown": {
+        "ease": "circInOut",
+        "beats": 1,
+        "list": [
+            "three",
+            "two",
+            "one",
+            "go"
+        ],
+        "properties": {},
+        "start": {
+            "x": 0,
+            "y": 0,
+            "alpha": 1,
+            "scale": {
+                "x": 1,
+                "y": 1
+            }
+        },
+        "end": {
+            "x": 0,
+            "y": 0,
+            "alpha": 0,
+            "scale": {
+                "x": 0.9,
+                "y": 0.9
             }
         }
     },

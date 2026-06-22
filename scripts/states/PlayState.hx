@@ -59,14 +59,15 @@ function onCamerasInit()
 
 public var CONTEXT_VARIABLES = Reflect.getProperty(this, 'context').publicVariables;
 
-ClientPrefs.data.downScroll = true;
+ClientPrefs.data.downScroll = false;
 ClientPrefs.data.botplay = false;
 
 // Real Shit
 
 public var startTime:Float = 0;
 
-public var spawnNotes:Bool = true;
+public var spawnNotes:Bool = false;
+public var skipCountdown:Bool = false;
 
 public var chart:ALESong;
 public var hud:ALEHud;
@@ -124,8 +125,6 @@ public function set_botplay(value:Bool):Bool
     return botplay;
 }
 
-// FIX
-
 public var health:Float = 50;
 
 function new(?newType:SongType, ?newPlaylist:Array<String>, ?newDifficulty:String, ?newWeek:String, ?newWeekScore:Float, ?newSongIndex:Int)
@@ -171,7 +170,9 @@ function create()
 
         initIcons();
 
-        startTime = Conductor.music == null ? 0 : Conductor.music.length * 0.945;
+        // FIX
+
+        skipCountdown = true;
 
         botplay = ClientPrefs.data.botplay;
 
@@ -183,7 +184,7 @@ function create()
 
         initSounds();
 
-        startSong();
+        initSong();
 
         moveCamera(0);
 
@@ -267,6 +268,10 @@ function initCameras()
 		game.camHUD = new FXCamera();
 
 		FlxG.cameras.add(camHUD, false);
+            
+        camOther = new FXCamera();
+
+        FlxG.cameras.add(camOther, false);
     }
 
     scriptsManager.callback(POST, 'CamerasInit');
@@ -288,6 +293,8 @@ function destroy()
 
     if (scriptsManager.callback(ON, 'Destroy'))
     {
+        Conductor.stop();
+
         FlxG.stage.removeEventListener('keyDown', justPressedKey);
         FlxG.stage.removeEventListener('keyUp', justReleasedKey);
 

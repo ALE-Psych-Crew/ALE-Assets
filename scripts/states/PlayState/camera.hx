@@ -1,3 +1,5 @@
+public var camOther:FXCamera;
+
 public var allowCameraMoving:Bool = true;
 
 public var cameraTarget:Character;
