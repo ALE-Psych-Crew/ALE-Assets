@@ -1,0 +1,76 @@
+{
+	"zoom": 0.9,
+	"speed": 1,
+	"hud": "default",
+	"charactersOffset": {
+		"type": {
+			"opponent": {
+				"x": 100,
+				"y": 100
+			},
+			"player": {
+				"x": 770,
+				"y": 100
+			},
+			"extra": {
+				"x": 400,
+				"y": 130
+			}
+		}
+	},
+	"charactersCamera": {
+		"type": {
+			"player": {
+				"x": -100,
+				"y": -70
+			}
+		}
+	},
+	"format": "ale-stage-v0.1",
+	"spritesConfig": {
+		"directory": "spooky",
+		"sprites": [
+			{
+				"id": "bg",
+				"images": [
+					"bg"
+				],
+				"type": "sheet",
+				"animations": [
+					{
+						"name": "strike"
+					},
+					{
+						"name": "idle"
+					}
+				],
+				"initialAnimation": "idle",
+				"properties": {
+					"x": -400,
+					"y": -100,
+					"scale": {
+						"x": 1,
+						"y": 1
+					}
+				},
+				"quality": "high"
+			},
+			{
+				"id": "lowBG",
+				"images": [
+					"lowBG"
+				],
+				"type": "image",
+				"properties": {
+					"x": -400,
+					"y": -100,
+					"scale": {
+						"x": 1,
+						"y": 1
+					}
+				},
+				"quality": "low"
+			}
+		]
+	}
+}

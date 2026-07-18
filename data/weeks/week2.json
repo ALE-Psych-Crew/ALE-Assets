@@ -1,0 +1,32 @@
+{
+	"songs": [
+		{
+			"icon": "spooky",
+			"name": "Spookeez",
+			"color": "#223344"
+		},
+		{
+			"icon": "spooky",
+			"name": "South",
+			"color": "#223344"
+		},
+		{
+			"icon": "monster",
+			"name": "Monster",
+			"color": "#223344"
+		}
+	],
+	"background": "halloween",
+	"image": "week2",
+	"phrase": "Spooky Month",
+	"locked": false,
+	"hideFreeplay": false,
+	"hideStoryMode": false,
+	"previousWeek": "week1",
+	"difficulties": [
+		"Easy",
+		"Normal",
+		"Hard"
+	],
+	"format": "ale-week-v0.1"
+}
