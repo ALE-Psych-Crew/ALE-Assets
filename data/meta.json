@@ -1,5 +1,7 @@
 {
-    "titleState": "FreeplayState",
+    "states": {
+        "InitialState": "FreeplayState"
+    },
     "developerMode": true,
     "loadDefaultWeeks": true
 }
